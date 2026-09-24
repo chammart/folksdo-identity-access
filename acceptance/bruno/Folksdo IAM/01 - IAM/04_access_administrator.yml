@@ -1,0 +1,28 @@
+info:
+  name: IAM — Access Administrator Authority
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/v1/access/permissions"
+  headers:
+    - name: Accept
+      value: "application/json"
+    - name: Authorization
+      value: "Bearer {{administratorSessionId}}"
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Prepared administrator exercises real Access authority", () => {
+          expect(res.getStatus()).to.equal(200);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

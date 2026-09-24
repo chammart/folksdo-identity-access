@@ -1,0 +1,294 @@
+name: Deploy Folksdo IAM Staging
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: folksdo-iam-staging
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "22"
+  PNPM_VERSION: "11.5.2"
+  IMAGE_NAME: ghcr.io/chammart/folksdo-identity-access
+  DEPLOY_PATH_SUFFIX: folksdo-iam-staging
+  COMPOSE_PROJECT_NAME: folksdo-identity-access-staging
+  HEALTH_URL: http://127.0.0.1:3101/health/live
+  READY_URL: http://127.0.0.1:3101/health/ready
+
+jobs:
+  validate-build-publish:
+    name: Certify, Build, Publish
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.image.outputs.tag }}
+      image_ref: ${{ steps.image.outputs.ref }}
+      image_digest: ${{ steps.docker-build.outputs.digest }}
+    steps:
+      - name: Checkout folksdo-identity-access
+        uses: actions/checkout@v4
+        with:
+          path: folksdo-services/folksdo-identity-access
+          fetch-depth: 0
+
+      - name: Checkout folksdo-platform
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.FOLKSDO_PLATFORM_REPOSITORY }}
+          token: ${{ secrets.FOLKSDO_PLATFORM_REPOSITORY_TOKEN }}
+          path: folksdo-services/folksdo-platform
+
+      - name: Checkout folksdo-engine
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.FOLKSDO_ENGINE_REPOSITORY }}
+          token: ${{ secrets.FOLKSDO_ENGINE_REPOSITORY_TOKEN }}
+          path: folksdo-engine
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: |
+            folksdo-services/folksdo-identity-access/pnpm-lock.yaml
+            folksdo-services/folksdo-platform/pnpm-lock.yaml
+            folksdo-engine/pnpm-lock.yaml
+
+      - name: Install folksdo-engine
+        working-directory: folksdo-engine
+        run: pnpm install --frozen-lockfile
+
+      - name: Install folksdo-platform
+        working-directory: folksdo-services/folksdo-platform
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Folksdo IAM
+        working-directory: folksdo-services/folksdo-identity-access
+        run: pnpm install --frozen-lockfile
+
+      - name: Build folksdo-engine
+        working-directory: folksdo-engine
+        run: pnpm build:ordered
+
+      - name: Build folksdo-platform
+        working-directory: folksdo-services/folksdo-platform
+        run: pnpm build
+
+      - name: Certify Folksdo IAM
+        working-directory: folksdo-services/folksdo-identity-access
+        run: pnpm certify
+
+      - name: Resolve immutable image
+        id: image
+        shell: bash
+        run: |
+          TAG="staging-${GITHUB_SHA::12}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "ref=${IMAGE_NAME}:${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and publish immutable image
+        id: docker-build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: folksdo-services/folksdo-identity-access/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.image.outputs.ref }}
+            ${{ env.IMAGE_NAME }}:develop
+          cache-from: type=gha,scope=folksdo-iam-staging
+          cache-to: type=gha,scope=folksdo-iam-staging,mode=max
+
+  deploy:
+    name: Deploy Staging
+    runs-on: ubuntu-latest
+    needs: validate-build-publish
+    environment:
+      name: staging
+      url: ${{ vars.IAM_STAGING_BASE_URL }}
+    steps:
+      - name: Checkout deployment definition
+        uses: actions/checkout@v4
+
+      - name: Upload staging Compose definition
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT }}
+          source: docker-compose.staging.yml
+          target: ${{ secrets.VPS_DEPLOY_ROOT }}/${{ env.DEPLOY_PATH_SUFFIX }}
+          overwrite: true
+
+      - name: Deploy immutable image
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          VPS_DEPLOY_ROOT: ${{ secrets.VPS_DEPLOY_ROOT }}
+          DEPLOY_PATH_SUFFIX: ${{ env.DEPLOY_PATH_SUFFIX }}
+          IMAGE_TAG: ${{ needs.validate-build-publish.outputs.image_tag }}
+          COMPOSE_PROJECT: ${{ env.COMPOSE_PROJECT_NAME }}
+          HEALTH_URL: ${{ env.HEALTH_URL }}
+          READY_URL: ${{ env.READY_URL }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT }}
+          command_timeout: 20m
+          script_stop: true
+          envs: VPS_DEPLOY_ROOT,DEPLOY_PATH_SUFFIX,IMAGE_TAG,COMPOSE_PROJECT,HEALTH_URL,READY_URL
+          script: |
+            set -euo pipefail
+            DEPLOY_PATH="${VPS_DEPLOY_ROOT}/${DEPLOY_PATH_SUFFIX}"
+            cd "${DEPLOY_PATH}"
+            test -f .env
+            mv -f docker-compose.staging.yml docker-compose.yml
+            if grep -q '^FOLKSDO_IAM_IMAGE_TAG=' .env; then
+              sed -i "s|^FOLKSDO_IAM_IMAGE_TAG=.*|FOLKSDO_IAM_IMAGE_TAG=${IMAGE_TAG}|" .env
+            else
+              printf '\nFOLKSDO_IAM_IMAGE_TAG=%s\n' "${IMAGE_TAG}" >> .env
+            fi
+            docker compose --project-name "${COMPOSE_PROJECT}" pull
+            docker compose --project-name "${COMPOSE_PROJECT}" up -d --remove-orphans
+            for URL in "${HEALTH_URL}" "${READY_URL}"; do
+              passed=false
+              for attempt in $(seq 1 30); do
+                if curl --fail --silent --show-error "${URL}" >/dev/null; then passed=true; break; fi
+                sleep 5
+              done
+              if [ "${passed}" != "true" ]; then
+                docker compose --project-name "${COMPOSE_PROJECT}" ps
+                docker compose --project-name "${COMPOSE_PROJECT}" logs --tail=200 api
+                exit 1
+              fi
+            done
+
+  prepare-staging:
+    name: Prepare Staging Certification
+    runs-on: ubuntu-latest
+    needs: [validate-build-publish, deploy]
+    environment:
+      name: staging
+      url: ${{ vars.IAM_STAGING_BASE_URL }}
+    steps:
+      - name: Prepare release-bound IAM fixtures
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          VPS_DEPLOY_ROOT: ${{ secrets.VPS_DEPLOY_ROOT }}
+          DEPLOY_PATH_SUFFIX: ${{ env.DEPLOY_PATH_SUFFIX }}
+          COMPOSE_PROJECT: ${{ env.COMPOSE_PROJECT_NAME }}
+          IMAGE_TAG: ${{ needs.validate-build-publish.outputs.image_tag }}
+          STAGING_BASE_URL: ${{ vars.IAM_STAGING_BASE_URL }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT }}
+          command_timeout: 20m
+          script_stop: true
+          envs: VPS_DEPLOY_ROOT,DEPLOY_PATH_SUFFIX,COMPOSE_PROJECT,IMAGE_TAG,STAGING_BASE_URL
+          script: |
+            set -euo pipefail
+            DEPLOY_PATH="${VPS_DEPLOY_ROOT}/${DEPLOY_PATH_SUFFIX}"
+            FIXTURE_DIRECTORY="${DEPLOY_PATH}/fixtures"
+            FIXTURE_FILENAME="staging-certification-${IMAGE_TAG}.json"
+            CONTAINER_PATH="/workspace/folksdo-services/folksdo-identity-access/.generated/staging/${FIXTURE_FILENAME}"
+            HOST_PATH="${FIXTURE_DIRECTORY}/${FIXTURE_FILENAME}"
+            cd "${DEPLOY_PATH}"
+            mkdir -p "${FIXTURE_DIRECTORY}"
+            docker compose --project-name "${COMPOSE_PROJECT}" exec -T api env \
+              STAGING_BASE_URL="${STAGING_BASE_URL}" \
+              STAGING_RELEASE_ID="${IMAGE_TAG}" \
+              STAGING_PREPARATION_CONFIRM=STAGING \
+              STAGING_CERTIFICATION_MANIFEST_PATH=".generated/staging/${FIXTURE_FILENAME}" \
+              pnpm staging:prepare
+            API_CONTAINER_ID="$(docker compose --project-name "${COMPOSE_PROJECT}" ps --quiet api)"
+            test -n "${API_CONTAINER_ID}"
+            docker compose --project-name "${COMPOSE_PROJECT}" exec -T api test -s "${CONTAINER_PATH}"
+            rm -f "${HOST_PATH}"
+            docker cp "${API_CONTAINER_ID}:${CONTAINER_PATH}" "${HOST_PATH}"
+            chmod 600 "${HOST_PATH}"
+            test -s "${HOST_PATH}"
+
+  certify-staging:
+    name: Certify Staging
+    runs-on: ubuntu-latest
+    needs: [validate-build-publish, deploy, prepare-staging]
+    environment:
+      name: staging
+      url: ${{ vars.IAM_STAGING_BASE_URL }}
+    steps:
+      - name: Certify deployed IAM release
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          VPS_DEPLOY_ROOT: ${{ secrets.VPS_DEPLOY_ROOT }}
+          DEPLOY_PATH_SUFFIX: ${{ env.DEPLOY_PATH_SUFFIX }}
+          COMPOSE_PROJECT: ${{ env.COMPOSE_PROJECT_NAME }}
+          IMAGE_TAG: ${{ needs.validate-build-publish.outputs.image_tag }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT }}
+          command_timeout: 20m
+          script_stop: true
+          envs: VPS_DEPLOY_ROOT,DEPLOY_PATH_SUFFIX,COMPOSE_PROJECT,IMAGE_TAG
+          script: |
+            set -euo pipefail
+            DEPLOY_PATH="${VPS_DEPLOY_ROOT}/${DEPLOY_PATH_SUFFIX}"
+            FIXTURE_FILENAME="staging-certification-${IMAGE_TAG}.json"
+            cd "${DEPLOY_PATH}"
+            docker compose --project-name "${COMPOSE_PROJECT}" exec -T api env \
+              STAGING_RELEASE_ID="${IMAGE_TAG}" \
+              STAGING_CERTIFICATION_TIMEOUT_MILLISECONDS=15000 \
+              STAGING_CERTIFICATION_MANIFEST_PATH=".generated/staging/${FIXTURE_FILENAME}" \
+              pnpm staging:certify
+
+      - name: Create certified release identity
+        shell: bash
+        env:
+          IMAGE_TAG: ${{ needs.validate-build-publish.outputs.image_tag }}
+          IMAGE_REF: ${{ needs.validate-build-publish.outputs.image_ref }}
+          IMAGE_DIGEST: ${{ needs.validate-build-publish.outputs.image_digest }}
+        run: |
+          jq -n \
+            --arg environment staging \
+            --arg sourceCommit "${GITHUB_SHA}" \
+            --arg imageTag "${IMAGE_TAG}" \
+            --arg imageRef "${IMAGE_REF}" \
+            --arg imageDigest "${IMAGE_DIGEST}" \
+            --arg certifiedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{schemaVersion:1,environment:$environment,sourceCommit:$sourceCommit,image:{tag:$imageTag,ref:$imageRef,digest:$imageDigest},certification:{certifiedAt:$certifiedAt}}' \
+            > staging-certified-release.json
+          test -s staging-certified-release.json
+
+      - name: Publish certified release identity
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-certified-release-${{ github.sha }}
+          path: staging-certified-release.json
+          if-no-files-found: error
+          retention-days: 30

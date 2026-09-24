@@ -1,0 +1,13 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+!.env.test.example
+!.env.e2e.example
+
+# Generated staging session credentials
+acceptance/bruno/Folksdo IAM/environments/staging.yml
+
+.generated/staging/

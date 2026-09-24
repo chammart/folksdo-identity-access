@@ -1,0 +1,52 @@
+# docker-compose.test.yml
+# -----------------------------------------------------------------------------
+# FOLKSDO IAM™ TEST INFRASTRUCTURE
+# -----------------------------------------------------------------------------
+# Repository-owned integration-certification infrastructure.
+#
+# The dedicated ports allow certification to run beside shared local
+# infrastructure. The runner owns startup, replica-set initialization, and
+# deterministic teardown.
+# -----------------------------------------------------------------------------
+
+services:
+  mongo:
+    image: mongo:7.0
+    container_name: folksdo-identity-access-test-mongo
+    command:
+      - mongod
+      - --port
+      - "${FOLKSDO_IAM_TEST_MONGO_PORT:-37027}"
+      - --replSet
+      - rs0
+      - --bind_ip_all
+    ports:
+      - "127.0.0.1:${FOLKSDO_IAM_TEST_MONGO_PORT:-37027}:${FOLKSDO_IAM_TEST_MONGO_PORT:-37027}"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mongosh --port ${FOLKSDO_IAM_TEST_MONGO_PORT:-37027} --quiet --eval 'db.adminCommand({ ping: 1 }).ok' | grep 1",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+
+  nats:
+    image: nats:2.10-alpine
+    container_name: folksdo-identity-access-test-nats
+    command:
+      - "-js"
+      - "-sd"
+      - "/data"
+      - "-m"
+      - "8222"
+    ports:
+      - "127.0.0.1:${FOLKSDO_IAM_TEST_NATS_PORT:-44227}:4222"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8222/varz"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 5s

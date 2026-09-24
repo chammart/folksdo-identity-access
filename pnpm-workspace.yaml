@@ -1,0 +1,9 @@
+packages:
+  - apps/*
+  - services/*
+  - ../folksdo-platform/packages/*
+  - ../../folksdo-engine/packages/*
+
+allowBuilds:
+  esbuild: true
+  unrs-resolver: true

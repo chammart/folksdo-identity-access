@@ -1,0 +1,32 @@
+name: local
+
+variables:
+  - name: baseUrl
+    value: "http://127.0.0.1:3110"
+
+  - name: administratorIdentityId
+    value: "user_0c4438ce-e258-4e07-b9ca-e634aa46b80a"
+
+  - name: administratorEmail
+    value: "identity-18119f8b2beb430f95be87a7531982e4@example.com"
+
+  - name: administratorSessionId
+    value: "session_6a5f87f0-2329-4cfc-a668-7556e9deb414"
+
+  - name: administratorMembershipId
+    value: "membership_18119f8b2beb430f95be87a7531982e4"
+
+  - name: administratorTenantId
+    value: "tenant_18119f8b2beb430f95be87a7531982e4"
+
+  - name: ordinaryMemberIdentityId
+    value: "user_0327f14d-172e-48ff-8ff4-b9c77f056a40"
+
+  - name: ordinaryMemberSessionId
+    value: "session_f8f933cc-0c46-4460-b6c0-b202287af6a2"
+
+  - name: ordinaryMemberMembershipId
+    value: "membership_7defee51e12940ddaf22f863c63e4a3c"
+
+  - name: ordinaryMemberTenantId
+    value: "tenant_7defee51e12940ddaf22f863c63e4a3c"

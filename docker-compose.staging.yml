@@ -1,0 +1,69 @@
+# docker-compose.staging.yml
+# -----------------------------------------------------------------------------
+# FOLKSDO IAM™ STAGING RUNTIME
+# -----------------------------------------------------------------------------
+
+services:
+  mongo:
+    image: mongo:7.0
+    restart: unless-stopped
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    volumes:
+      - iam-mongo-data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok' | grep 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+
+  mongo-init:
+    image: mongo:7.0
+    restart: "no"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "-lc"]
+    command: >-
+      mongosh --host mongo:27017 --quiet --eval
+      'try { rs.status().ok } catch (e) { rs.initiate({_id:"rs0",members:[{_id:0,host:"mongo:27017"}]}) }'
+
+  nats:
+    image: nats:2.10-alpine
+    restart: unless-stopped
+    command: ["-js", "-sd", "/data", "-m", "8222"]
+    volumes:
+      - iam-nats-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8222/varz"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+
+  api:
+    image: ghcr.io/chammart/folksdo-identity-access:${FOLKSDO_IAM_IMAGE_TAG:?FOLKSDO_IAM_IMAGE_TAG is required}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      PORT: "3100"
+      IAM_MONGODB_URI: mongodb://mongo:27017/?replicaSet=rs0
+      IAM_NATS_URL: nats://nats:4222
+    depends_on:
+      mongo-init:
+        condition: service_completed_successfully
+      nats:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${FOLKSDO_IAM_STAGING_PORT:-3101}:3100"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3100/health/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+volumes:
+  iam-mongo-data:
+  iam-nats-data:

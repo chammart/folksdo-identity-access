@@ -1,0 +1,102 @@
+{
+  // ---------------------------------------------------------------------------
+  // EDITOR
+  // ---------------------------------------------------------------------------
+
+  "editor.formatOnSave": true,
+
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  // ---------------------------------------------------------------------------
+  // LANGUAGE FORMATTERS
+  // ---------------------------------------------------------------------------
+
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  "[typescript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  "[vue]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  // ---------------------------------------------------------------------------
+  // ESLINT
+  // ---------------------------------------------------------------------------
+
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "vue"
+  ],
+
+  // ---------------------------------------------------------------------------
+  // PROBLEM DECORATIONS
+  // ---------------------------------------------------------------------------
+  // Display TypeScript, JavaScript, and ESLint problems directly in the
+  // Explorer instead of requiring a file to be opened first.
+  //
+  // Files containing errors receive error decorations and badges.
+  // Parent directories also inherit problem decorations.
+  // ---------------------------------------------------------------------------
+
+  "problems.decorations.enabled": true,
+
+  "explorer.decorations.badges": true,
+  "explorer.decorations.colors": true,
+
+  // ---------------------------------------------------------------------------
+  // TYPESCRIPT
+  // ---------------------------------------------------------------------------
+  // Enable project-wide diagnostics so TypeScript discovers errors across the
+  // workspace rather than concentrating only on files currently opened in the
+  // editor.
+  //
+  // Folksdo Operations™ is a large TypeScript monorepo, so additional tsserver
+  // memory is intentionally allocated.
+  // ---------------------------------------------------------------------------
+
+  "typescript.tsserver.experimental.enableProjectDiagnostics": true,
+
+  "typescript.tsserver.maxTsServerMemory": 8192,
+
+  "typescript.tsdk": "node_modules/typescript/lib",
+
+  // ---------------------------------------------------------------------------
+  // FILES
+  // ---------------------------------------------------------------------------
+
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true
+}

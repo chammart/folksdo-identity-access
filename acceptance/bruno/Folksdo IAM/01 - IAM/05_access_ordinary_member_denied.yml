@@ -1,0 +1,29 @@
+info:
+  name: IAM — Access Ordinary Member Denied
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/v1/access/permissions"
+  headers:
+    - name: Accept
+      value: "application/json"
+    - name: Authorization
+      value: "Bearer {{ordinaryMemberSessionId}}"
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Ordinary Membership authority cannot administer Access", () => {
+          expect(res.getStatus()).to.equal(403);
+          expect(res.body.error.code).to.equal("access_authorization_denied");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

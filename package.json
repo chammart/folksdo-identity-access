@@ -1,0 +1,40 @@
+{
+  "name": "folksdo-identity-access",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@11.5.2",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "pnpm typecheck:certification && pnpm --filter @folksdo-identity-access/identity typecheck && pnpm --filter @folksdo-identity-access/membership typecheck && pnpm --filter @folksdo-identity-access/access typecheck && pnpm --filter @folksdo-identity-access/server typecheck",
+    "typecheck:certification": "tsc -p scripts/tsconfig.json --noEmit && tsc -p tests/tsconfig.json --noEmit",
+    "build": "pnpm --filter @folksdo-identity-access/identity build && pnpm --filter @folksdo-identity-access/membership build && pnpm --filter @folksdo-identity-access/access build && pnpm --filter @folksdo-identity-access/server build",
+    "dev": "pnpm --filter @folksdo-identity-access/server dev",
+    "start": "pnpm --filter @folksdo-identity-access/server start",
+    "test:integration": "tsx scripts/testing/run-integration-tests.ts",
+    "test:e2e": "tsx scripts/testing/run-integration-tests.ts --e2e",
+    "test:integration:jest": "jest --config jest.config.integration.cjs --runInBand --detectOpenHandles",
+    "certify": "pnpm typecheck && pnpm test:integration && pnpm test:e2e && pnpm build",
+    "certification:local": "tsx scripts/certification/prepare-local-certification.ts",
+    "certification:staging": "pnpm staging:certify",
+    "staging:prepare": "tsx scripts/staging/prepare.ts",
+    "staging:certify": "tsx scripts/staging/certify.ts"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@nats-io/nats-core": "^3.4.0",
+    "@nats-io/transport-node": "^3.4.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^25.9.3",
+    "fastify": "^5.12.5",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.11",
+    "tsup": "^8.5.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "mongodb": "^7.6.0"
+  }
+}

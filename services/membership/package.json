@@ -1,0 +1,54 @@
+{
+  "name": "@folksdo-identity-access/membership",
+  "private": true,
+  "version": "0.1.0",
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./events": {
+      "types": "./src/events/index.ts",
+      "require": "./dist/events/index.js",
+      "default": "./dist/events/index.js"
+    },
+    "./errors": {
+      "types": "./src/errors/index.ts",
+      "require": "./dist/errors/index.js",
+      "default": "./dist/errors/index.js"
+    },
+    "./api": {
+      "types": "./src/api/index.ts",
+      "require": "./dist/api/index.js",
+      "default": "./dist/api/index.js"
+    },
+    "./authorization": {
+      "types": "./src/authorization/index.ts",
+      "require": "./dist/authorization/index.js",
+      "default": "./dist/authorization/index.js"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsup"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.3",
+    "fastify": "^5.12.5",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@folksdo-engine/foundation": "workspace:*",
+    "@folksdo-engine/runtime": "workspace:*",
+    "@folksdo-platform/runtime": "workspace:*",
+    "zod": "^4.6.5"
+  },
+  "peerDependencies": {
+    "fastify": "^5.12.5"
+  }
+}

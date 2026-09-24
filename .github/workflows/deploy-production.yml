@@ -1,0 +1,551 @@
+name: Legacy Production Build (Do Not Use)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: folksdo-operations-production
+  cancel-in-progress: false
+
+env:
+  IMAGE_NAME: ghcr.io/chammart/folksdo-operations
+  NODE_VERSION: "22"
+  PNPM_VERSION: "11.5.2"
+
+  DEPLOY_PATH_SUFFIX: folksdo-operations-production
+  COMPOSE_PROJECT_NAME: folksdo-operations-production
+
+  HEALTH_URL: http://127.0.0.1:3000/health
+  READY_URL: http://127.0.0.1:3000/ready
+
+  PRODUCTION_DOMAIN: https://nexacore.folksdo.com
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # VALIDATE, BUILD, AND PUBLISH
+  # ---------------------------------------------------------------------------
+  # This job validates Folksdo Operations™ from a clean checkout, builds the
+  # immutable production image, and publishes it to GHCR.
+  #
+  # The deployment job never rebuilds source code. It promotes the exact image
+  # produced by this job.
+  # ---------------------------------------------------------------------------
+
+  validate-build-publish:
+    name: Validate, Build, Publish
+    runs-on: ubuntu-latest
+
+    outputs:
+      image_tag: ${{ steps.image.outputs.tag }}
+      image_ref: ${{ steps.image.outputs.ref }}
+
+    steps:
+      # -----------------------------------------------------------------------
+      # SOURCE CHECKOUT
+      # -----------------------------------------------------------------------
+
+      - name: Checkout folksdo-operations
+        uses: actions/checkout@v4
+        with:
+          path: folksdo-operations
+
+      - name: Checkout folksdo-engine
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.FOLKSDO_ENGINE_REPOSITORY }}
+          token: ${{ secrets.FOLKSDO_ENGINE_REPOSITORY_TOKEN }}
+          path: folksdo-engine
+
+      # -----------------------------------------------------------------------
+      # NODE AND PNPM
+      # -----------------------------------------------------------------------
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: |
+            folksdo-operations/pnpm-lock.yaml
+            folksdo-engine/pnpm-lock.yaml
+
+      # -----------------------------------------------------------------------
+      # DEPENDENCY INSTALLATION
+      # -----------------------------------------------------------------------
+
+      - name: Install folksdo-engine dependencies
+        working-directory: folksdo-engine
+        run: pnpm install --frozen-lockfile
+
+      - name: Install folksdo-operations dependencies
+        working-directory: folksdo-operations
+        run: pnpm install --frozen-lockfile
+
+      # -----------------------------------------------------------------------
+      # REPOSITORY VALIDATION
+      # -----------------------------------------------------------------------
+
+      - name: Build folksdo-engine
+        working-directory: folksdo-engine
+        run: pnpm build
+
+      - name: Verify folksdo-operations
+        working-directory: folksdo-operations
+        run: pnpm verify
+
+      # -----------------------------------------------------------------------
+      # IMMUTABLE IMAGE IDENTITY
+      # -----------------------------------------------------------------------
+
+      - name: Resolve production image tag
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          IMAGE_TAG="production-${GITHUB_SHA::12}"
+
+          echo "tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "ref=${IMAGE_NAME}:${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+
+      # -----------------------------------------------------------------------
+      # DOCKER BUILD INFRASTRUCTURE
+      # -----------------------------------------------------------------------
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract Docker metadata
+        id: metadata
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ steps.image.outputs.tag }}
+            type=raw,value=latest
+          labels: |
+            org.opencontainers.image.title=Folksdo Operations
+            org.opencontainers.image.description=Folksdo Operations Production API
+            org.opencontainers.image.vendor=Folksdo
+            org.opencontainers.image.source=https://github.com/chammart/folksdo-operations
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.ref.name=${{ github.ref_name }}
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # -----------------------------------------------------------------------
+      # BUILD AND PUBLISH
+      # -----------------------------------------------------------------------
+      # The parent runner workspace is the Docker build context because the
+      # production image consumes both checked-out repositories:
+      #
+      #   folksdo-engine
+      #   folksdo-operations
+      # -----------------------------------------------------------------------
+
+      - name: Build and push production image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: folksdo-operations/Dockerfile
+          push: true
+          tags: ${{ steps.metadata.outputs.tags }}
+          labels: ${{ steps.metadata.outputs.labels }}
+          cache-from: type=gha,scope=folksdo-operations-production
+          cache-to: type=gha,scope=folksdo-operations-production,mode=max
+
+      # -----------------------------------------------------------------------
+      # BUILD SUMMARY
+      # -----------------------------------------------------------------------
+
+      - name: Production build summary
+        shell: bash
+        run: |
+          {
+            echo "## Folksdo Operations Production Build"
+            echo ""
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Environment | production |"
+            echo "| Branch | ${{ github.ref_name }} |"
+            echo "| Commit | ${{ github.sha }} |"
+            echo "| Image | ${{ steps.image.outputs.ref }} |"
+            echo "| Moving Tag | ${{ env.IMAGE_NAME }}:latest |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
+  # DEPLOY PRODUCTION
+  # ---------------------------------------------------------------------------
+  # This job promotes the immutable image produced above to the production VPS.
+  #
+  # Every GitHub Actions job runs on an isolated runner. The repository must
+  # therefore be checked out again before its production Compose definition can
+  # be synchronized to the VPS.
+  #
+  # The production VPS does not:
+  #
+  #   • clone application source code
+  #   • install application dependencies
+  #   • build application packages
+  #   • build Docker images
+  #
+  # It receives the version-controlled Compose definition, pulls the published
+  # image, and runs it.
+  # ---------------------------------------------------------------------------
+
+  deploy:
+    name: Deploy Production
+    runs-on: ubuntu-latest
+    needs: validate-build-publish
+
+    environment:
+      name: production
+      url: https://nexacore.folksdo.com
+
+    steps:
+      # -----------------------------------------------------------------------
+      # SOURCE CHECKOUT
+      # -----------------------------------------------------------------------
+
+      - name: Checkout folksdo-operations
+        uses: actions/checkout@v4
+        with:
+          path: folksdo-operations
+
+      # -----------------------------------------------------------------------
+      # PRODUCTION COMPOSE PREPARATION
+      # -----------------------------------------------------------------------
+      # The repository owns docker-compose.production.yml.
+      #
+      # The VPS runtime contract uses the conventional docker-compose.yml name.
+      # A deployment artifact is prepared under that final filename before SCP,
+      # avoiding any remote rename or ambiguity.
+      # -----------------------------------------------------------------------
+
+      - name: Prepare production Compose artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          COMPOSE_SOURCE="folksdo-operations/docker-compose.production.yml"
+          ARTIFACT_DIRECTORY="production-deployment"
+          ARTIFACT_PATH="${ARTIFACT_DIRECTORY}/docker-compose.yml"
+
+          if [ ! -f "${COMPOSE_SOURCE}" ]; then
+            echo "Production Compose source not found:"
+            echo "${COMPOSE_SOURCE}"
+            echo ""
+            echo "Available repository files:"
+            find folksdo-operations -maxdepth 2 -type f | sort
+            exit 1
+          fi
+
+          mkdir -p "${ARTIFACT_DIRECTORY}"
+
+          cp \
+            "${COMPOSE_SOURCE}" \
+            "${ARTIFACT_PATH}"
+
+          if [ ! -s "${ARTIFACT_PATH}" ]; then
+            echo "Prepared production Compose artifact is missing or empty."
+            exit 1
+          fi
+
+          echo "Production Compose artifact prepared:"
+          ls -la "${ARTIFACT_PATH}"
+
+      # -----------------------------------------------------------------------
+      # PRODUCTION COMPOSE SYNCHRONIZATION
+      # -----------------------------------------------------------------------
+      # Git remains the source of truth for the production Compose definition.
+      #
+      # The production .env remains owned by the VPS and is never transported
+      # through GitHub Actions.
+      # -----------------------------------------------------------------------
+
+      - name: Upload production Compose definition
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT }}
+          source: production-deployment/docker-compose.yml
+          target: ${{ secrets.VPS_DEPLOY_ROOT }}/${{ env.DEPLOY_PATH_SUFFIX }}
+          strip_components: 1
+          overwrite: true
+
+      # -----------------------------------------------------------------------
+      # IMAGE DEPLOYMENT
+      # -----------------------------------------------------------------------
+
+      - name: Deploy production image on VPS
+        uses: appleboy/ssh-action@v1.2.0
+
+        env:
+          VPS_DEPLOY_ROOT: ${{ secrets.VPS_DEPLOY_ROOT }}
+          DEPLOY_PATH_SUFFIX: ${{ env.DEPLOY_PATH_SUFFIX }}
+          IMAGE_TAG: ${{ needs.validate-build-publish.outputs.image_tag }}
+          COMPOSE_PROJECT: ${{ env.COMPOSE_PROJECT_NAME }}
+          HEALTH_URL: ${{ env.HEALTH_URL }}
+          READY_URL: ${{ env.READY_URL }}
+
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT }}
+
+          timeout: 30s
+          command_timeout: 20m
+          script_stop: true
+
+          envs: VPS_DEPLOY_ROOT,DEPLOY_PATH_SUFFIX,IMAGE_TAG,COMPOSE_PROJECT,HEALTH_URL,READY_URL
+
+          script: |
+            set -euo pipefail
+
+            # -----------------------------------------------------------------
+            # REQUIRED DEPLOYMENT VARIABLES
+            # -----------------------------------------------------------------
+
+            if [ -z "${VPS_DEPLOY_ROOT:-}" ]; then
+              echo "VPS_DEPLOY_ROOT is unavailable to the production deployment."
+              exit 1
+            fi
+
+            if [ -z "${DEPLOY_PATH_SUFFIX:-}" ]; then
+              echo "DEPLOY_PATH_SUFFIX is unavailable to the production deployment."
+              exit 1
+            fi
+
+            if [ -z "${IMAGE_TAG:-}" ]; then
+              echo "IMAGE_TAG is unavailable to the production deployment."
+              exit 1
+            fi
+
+            if [ -z "${COMPOSE_PROJECT:-}" ]; then
+              echo "COMPOSE_PROJECT is unavailable to the production deployment."
+              exit 1
+            fi
+
+            if [ -z "${HEALTH_URL:-}" ]; then
+              echo "HEALTH_URL is unavailable to the production deployment."
+              exit 1
+            fi
+
+            if [ -z "${READY_URL:-}" ]; then
+              echo "READY_URL is unavailable to the production deployment."
+              exit 1
+            fi
+
+            DEPLOY_PATH="${VPS_DEPLOY_ROOT}/${DEPLOY_PATH_SUFFIX}"
+
+            echo "Starting Folksdo Operations production deployment."
+            echo "Deployment path: ${DEPLOY_PATH}"
+            echo "Image tag: ${IMAGE_TAG}"
+            echo "Compose project: ${COMPOSE_PROJECT}"
+
+            # -----------------------------------------------------------------
+            # DEPLOYMENT DIRECTORY VALIDATION
+            # -----------------------------------------------------------------
+            # Production must already be provisioned. The workflow does not
+            # silently create an incomplete production environment.
+            # -----------------------------------------------------------------
+
+            if [ ! -d "${DEPLOY_PATH}" ]; then
+              echo "Missing production deployment directory: ${DEPLOY_PATH}"
+              echo "Provision the production environment before deployment."
+              exit 1
+            fi
+
+            cd "${DEPLOY_PATH}"
+
+            # -----------------------------------------------------------------
+            # DEPLOYMENT CONTRACT VALIDATION
+            # -----------------------------------------------------------------
+
+            if [ ! -f docker-compose.yml ]; then
+              echo "Missing ${DEPLOY_PATH}/docker-compose.yml"
+              exit 1
+            fi
+
+            if [ ! -s docker-compose.yml ]; then
+              echo "${DEPLOY_PATH}/docker-compose.yml is empty."
+              exit 1
+            fi
+
+            if [ ! -f .env ]; then
+              echo "Missing ${DEPLOY_PATH}/.env"
+              exit 1
+            fi
+
+            # Validate the resolved Compose configuration before changing the
+            # running production stack.
+            docker compose \
+              --project-name "${COMPOSE_PROJECT}" \
+              config --quiet
+
+            # -----------------------------------------------------------------
+            # IMMUTABLE IMAGE PROMOTION
+            # -----------------------------------------------------------------
+            # Update only the immutable image tag consumed by Docker Compose.
+            #
+            # All other production environment configuration remains stored on
+            # and owned by the VPS.
+            # -----------------------------------------------------------------
+
+            if grep -q '^FOLKSDO_OPERATIONS_IMAGE_TAG=' .env; then
+              sed -i \
+                "s|^FOLKSDO_OPERATIONS_IMAGE_TAG=.*|FOLKSDO_OPERATIONS_IMAGE_TAG=${IMAGE_TAG}|" \
+                .env
+            else
+              printf \
+                '\nFOLKSDO_OPERATIONS_IMAGE_TAG=%s\n' \
+                "${IMAGE_TAG}" >> .env
+            fi
+
+            # Validate Compose again with the final immutable image tag.
+            docker compose \
+              --project-name "${COMPOSE_PROJECT}" \
+              config --quiet
+
+            # -----------------------------------------------------------------
+            # PULL AND START
+            # -----------------------------------------------------------------------
+            # Docker uses the persistent GHCR credentials already stored for the
+            # VPS deployment user.
+            # -----------------------------------------------------------------
+
+            docker compose \
+              --project-name "${COMPOSE_PROJECT}" \
+              pull
+
+            docker compose \
+              --project-name "${COMPOSE_PROJECT}" \
+              up -d --remove-orphans
+
+            docker compose \
+              --project-name "${COMPOSE_PROJECT}" \
+              ps
+
+            # -----------------------------------------------------------------
+            # HEALTH VALIDATION
+            # -----------------------------------------------------------------
+
+            echo "Waiting for production health checks."
+
+            health_passed=false
+
+            for attempt in $(seq 1 30); do
+              if curl \
+                --fail \
+                --silent \
+                --show-error \
+                "${HEALTH_URL}" > /dev/null; then
+                echo "Health check passed on attempt ${attempt}."
+                health_passed=true
+                break
+              fi
+
+              echo "Health check attempt ${attempt}/30 failed."
+              sleep 5
+            done
+
+            if [ "${health_passed}" != "true" ]; then
+              echo "Production health check failed after 30 attempts."
+
+              docker compose \
+                --project-name "${COMPOSE_PROJECT}" \
+                ps
+
+              docker compose \
+                --project-name "${COMPOSE_PROJECT}" \
+                logs --tail=200 api
+
+              exit 1
+            fi
+
+            # -----------------------------------------------------------------
+            # READINESS VALIDATION
+            # -----------------------------------------------------------------
+
+            echo "Waiting for production readiness checks."
+
+            readiness_passed=false
+
+            for attempt in $(seq 1 30); do
+              if curl \
+                --fail \
+                --silent \
+                --show-error \
+                "${READY_URL}" > /dev/null; then
+                echo "Readiness check passed on attempt ${attempt}."
+                readiness_passed=true
+                break
+              fi
+
+              echo "Readiness check attempt ${attempt}/30 failed."
+              sleep 5
+            done
+
+            if [ "${readiness_passed}" != "true" ]; then
+              echo "Production readiness check failed after 30 attempts."
+
+              docker compose \
+                --project-name "${COMPOSE_PROJECT}" \
+                ps
+
+              docker compose \
+                --project-name "${COMPOSE_PROJECT}" \
+                logs --tail=200 api
+
+              exit 1
+            fi
+
+            # -----------------------------------------------------------------
+            # POST-DEPLOYMENT STATUS
+            # -----------------------------------------------------------------
+
+            docker compose \
+              --project-name "${COMPOSE_PROJECT}" \
+              ps
+
+            echo "Folksdo Operations production deployment completed successfully."
+
+      # -----------------------------------------------------------------------
+      # DEPLOYMENT SUMMARY
+      # -----------------------------------------------------------------------
+
+      - name: Production deployment summary
+        shell: bash
+        run: |
+          {
+            echo "## Folksdo Operations Production Deployment"
+            echo ""
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Environment | production |"
+            echo "| Domain | ${{ env.PRODUCTION_DOMAIN }} |"
+            echo "| Image | ${{ needs.validate-build-publish.outputs.image_ref }} |"
+            echo "| Compose Source | docker-compose.production.yml |"
+            echo "| Deployed Compose | docker-compose.yml |"
+            echo "| Health | Passed |"
+            echo "| Readiness | Passed |"
+            echo "| Staging Seed | Not applicable |"
+            echo "| Acceptance Automation | Not configured |"
+          } >> "$GITHUB_STEP_SUMMARY"
