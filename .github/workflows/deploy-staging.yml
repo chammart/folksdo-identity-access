@@ -50,7 +50,25 @@ jobs:
           repository: ${{ secrets.FOLKSDO_ENGINE_REPOSITORY }}
           token: ${{ secrets.FOLKSDO_ENGINE_REPOSITORY_TOKEN }}
           path: folksdo-engine
+      - name: Verify Engine checkout and dependency contract
+        shell: bash
+        run: |
+          echo "Engine revision:"
+          git -C folksdo-engine log -1 --format='%H %s'
 
+          echo "Engine branch:"
+          git -C folksdo-engine branch --show-current
+
+          echo "Engine runtime MongoDB dependency:"
+          node -p "require('./folksdo-engine/packages/runtime/package.json').dependencies.mongodb"
+
+          echo "IAM lockfile Engine runtime importer:"
+          grep -A 12 '^  ../../folksdo-engine/packages/runtime:' \
+            folksdo-services/folksdo-identity-access/pnpm-lock.yaml
+
+          echo "Engine lockfile runtime importer:"
+          grep -A 12 '^  packages/runtime:' \
+            folksdo-engine/pnpm-lock.yaml
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
