@@ -11,7 +11,11 @@ services:
     volumes:
       - iam-mongo-data:/data/db
     healthcheck:
-      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok' | grep 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok' | grep 1",
+        ]
       interval: 5s
       timeout: 5s
       retries: 30
@@ -23,10 +27,22 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
-    entrypoint: ["/bin/bash", "-lc"]
-    command: >-
-      mongosh --host mongo:27017 --quiet --eval
-      'try { rs.status().ok } catch (e) { rs.initiate({_id:"rs0",members:[{_id:0,host:"mongo:27017"}]}) }'
+    entrypoint: ["/bin/bash", "-c"]
+    command: |
+      mongosh "mongodb://mongo:27017/?directConnection=true" --quiet --eval '
+        try {
+          rs.status();
+          print("Replica set already initialized");
+        } catch (e) {
+          if (e.codeName !== "NotYetInitialized") {
+            throw e;
+          }
+          rs.initiate({
+            _id: "rs0",
+            members: [{ _id: 0, host: "mongo:27017" }]
+          });
+        }
+      '
 
   nats:
     image: nats:2.10-alpine
@@ -58,7 +74,13 @@ services:
     ports:
       - "127.0.0.1:${FOLKSDO_IAM_STAGING_PORT:-3101}:3100"
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3100/health/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3100/health/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
       interval: 10s
       timeout: 5s
       retries: 30
