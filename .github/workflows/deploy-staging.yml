@@ -86,6 +86,10 @@ jobs:
         working-directory: folksdo-services/folksdo-platform
         run: pnpm build
 
+      - name: Prepare test environment
+        working-directory: folksdo-services/folksdo-identity-access
+        run: cp .env.test.example .env.test
+      
       - name: Certify Folksdo IAM
         working-directory: folksdo-services/folksdo-identity-access
         run: pnpm certify
