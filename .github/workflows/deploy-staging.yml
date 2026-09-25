@@ -149,7 +149,7 @@ jobs:
     needs: validate-build-publish
     environment:
       name: staging
-      url: ${{ vars.IAM_STAGING_BASE_URL }}
+      url: ${{ secrets.IAM_STAGING_BASE_URL }}
     steps:
       - name: Checkout deployment definition
         uses: actions/checkout@v4
@@ -223,7 +223,7 @@ jobs:
           DEPLOY_PATH_SUFFIX: ${{ env.DEPLOY_PATH_SUFFIX }}
           COMPOSE_PROJECT: ${{ env.COMPOSE_PROJECT_NAME }}
           IMAGE_TAG: ${{ needs.validate-build-publish.outputs.image_tag }}
-          STAGING_BASE_URL: ${{ vars.IAM_STAGING_BASE_URL }}
+          STAGING_BASE_URL: ${{ secrets.IAM_STAGING_BASE_URL }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
@@ -261,7 +261,7 @@ jobs:
     needs: [validate-build-publish, deploy, prepare-staging]
     environment:
       name: staging
-      url: ${{ vars.IAM_STAGING_BASE_URL }}
+      url: ${{ secrets.IAM_STAGING_BASE_URL }}
     steps:
       - name: Certify deployed IAM release
         uses: appleboy/ssh-action@v1.2.0
