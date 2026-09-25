@@ -30,6 +30,7 @@ jobs:
       image_tag: ${{ steps.image.outputs.tag }}
       image_ref: ${{ steps.image.outputs.ref }}
       image_digest: ${{ steps.docker-build.outputs.digest }}
+
     steps:
       - name: Checkout folksdo-identity-access
         uses: actions/checkout@v4
@@ -50,6 +51,7 @@ jobs:
           repository: ${{ secrets.FOLKSDO_ENGINE_REPOSITORY }}
           token: ${{ secrets.FOLKSDO_ENGINE_REPOSITORY_TOKEN }}
           path: folksdo-engine
+
       - name: Verify Engine checkout and dependency contract
         shell: bash
         run: |
@@ -69,6 +71,7 @@ jobs:
           echo "Engine lockfile runtime importer:"
           grep -A 12 '^  packages/runtime:' \
             folksdo-engine/pnpm-lock.yaml
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -107,7 +110,7 @@ jobs:
       - name: Prepare test environment
         working-directory: folksdo-services/folksdo-identity-access
         run: cp .env.test.example .env.test
-      
+
       - name: Certify Folksdo IAM
         working-directory: folksdo-services/folksdo-identity-access
         run: pnpm certify
@@ -149,7 +152,8 @@ jobs:
     needs: validate-build-publish
     environment:
       name: staging
-      url: ${{ secrets.IAM_STAGING_BASE_URL }}
+      url: ${{ vars.IAM_STAGING_BASE_URL }}
+
     steps:
       - name: Checkout deployment definition
         uses: actions/checkout@v4
@@ -188,19 +192,26 @@ jobs:
             cd "${DEPLOY_PATH}"
             test -f .env
             mv -f docker-compose.staging.yml docker-compose.yml
+
             if grep -q '^FOLKSDO_IAM_IMAGE_TAG=' .env; then
               sed -i "s|^FOLKSDO_IAM_IMAGE_TAG=.*|FOLKSDO_IAM_IMAGE_TAG=${IMAGE_TAG}|" .env
             else
               printf '\nFOLKSDO_IAM_IMAGE_TAG=%s\n' "${IMAGE_TAG}" >> .env
             fi
+
             docker compose --project-name "${COMPOSE_PROJECT}" pull
             docker compose --project-name "${COMPOSE_PROJECT}" up -d --remove-orphans
+
             for URL in "${HEALTH_URL}" "${READY_URL}"; do
               passed=false
               for attempt in $(seq 1 30); do
-                if curl --fail --silent --show-error "${URL}" >/dev/null; then passed=true; break; fi
+                if curl --fail --silent --show-error "${URL}" >/dev/null; then
+                  passed=true
+                  break
+                fi
                 sleep 5
               done
+
               if [ "${passed}" != "true" ]; then
                 docker compose --project-name "${COMPOSE_PROJECT}" ps
                 docker compose --project-name "${COMPOSE_PROJECT}" logs --tail=200 api
@@ -215,6 +226,7 @@ jobs:
     environment:
       name: staging
       url: ${{ vars.IAM_STAGING_BASE_URL }}
+
     steps:
       - name: Prepare release-bound IAM fixtures
         uses: appleboy/ssh-action@v1.2.0
@@ -223,7 +235,7 @@ jobs:
           DEPLOY_PATH_SUFFIX: ${{ env.DEPLOY_PATH_SUFFIX }}
           COMPOSE_PROJECT: ${{ env.COMPOSE_PROJECT_NAME }}
           IMAGE_TAG: ${{ needs.validate-build-publish.outputs.image_tag }}
-          STAGING_BASE_URL: ${{ secrets.IAM_STAGING_BASE_URL }}
+          STAGING_BASE_URL: ${{ vars.IAM_STAGING_BASE_URL }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
@@ -239,17 +251,23 @@ jobs:
             FIXTURE_FILENAME="staging-certification-${IMAGE_TAG}.json"
             CONTAINER_PATH="/workspace/folksdo-services/folksdo-identity-access/.generated/staging/${FIXTURE_FILENAME}"
             HOST_PATH="${FIXTURE_DIRECTORY}/${FIXTURE_FILENAME}"
+
             cd "${DEPLOY_PATH}"
             mkdir -p "${FIXTURE_DIRECTORY}"
+
             docker compose --project-name "${COMPOSE_PROJECT}" exec -T api env \
               STAGING_BASE_URL="${STAGING_BASE_URL}" \
               STAGING_RELEASE_ID="${IMAGE_TAG}" \
               STAGING_PREPARATION_CONFIRM=STAGING \
               STAGING_CERTIFICATION_MANIFEST_PATH=".generated/staging/${FIXTURE_FILENAME}" \
               pnpm staging:prepare
+
             API_CONTAINER_ID="$(docker compose --project-name "${COMPOSE_PROJECT}" ps --quiet api)"
             test -n "${API_CONTAINER_ID}"
-            docker compose --project-name "${COMPOSE_PROJECT}" exec -T api test -s "${CONTAINER_PATH}"
+
+            docker compose --project-name "${COMPOSE_PROJECT}" exec -T api \
+              test -s "${CONTAINER_PATH}"
+
             rm -f "${HOST_PATH}"
             docker cp "${API_CONTAINER_ID}:${CONTAINER_PATH}" "${HOST_PATH}"
             chmod 600 "${HOST_PATH}"
@@ -261,7 +279,8 @@ jobs:
     needs: [validate-build-publish, deploy, prepare-staging]
     environment:
       name: staging
-      url: ${{ secrets.IAM_STAGING_BASE_URL }}
+      url: ${{ vars.IAM_STAGING_BASE_URL }}
+
     steps:
       - name: Certify deployed IAM release
         uses: appleboy/ssh-action@v1.2.0
@@ -282,7 +301,9 @@ jobs:
             set -euo pipefail
             DEPLOY_PATH="${VPS_DEPLOY_ROOT}/${DEPLOY_PATH_SUFFIX}"
             FIXTURE_FILENAME="staging-certification-${IMAGE_TAG}.json"
+
             cd "${DEPLOY_PATH}"
+
             docker compose --project-name "${COMPOSE_PROJECT}" exec -T api env \
               STAGING_RELEASE_ID="${IMAGE_TAG}" \
               STAGING_CERTIFICATION_TIMEOUT_MILLISECONDS=15000 \
@@ -305,6 +326,7 @@ jobs:
             --arg certifiedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             '{schemaVersion:1,environment:$environment,sourceCommit:$sourceCommit,image:{tag:$imageTag,ref:$imageRef,digest:$imageDigest},certification:{certifiedAt:$certifiedAt}}' \
             > staging-certified-release.json
+
           test -s staging-certified-release.json
 
       - name: Publish certified release identity
