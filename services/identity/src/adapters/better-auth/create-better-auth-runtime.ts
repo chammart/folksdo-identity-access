@@ -33,7 +33,12 @@ import {
 } from "node:async_hooks";
 
 import {
+    randomUUID,
+} from "node:crypto";
+
+import {
     betterAuth,
+    type BetterAuthOptions,
 } from "better-auth";
 
 import {
@@ -178,138 +183,144 @@ export function createBetterAuthRuntime(
     const passwordResetContext =
         new AsyncLocalStorage<MutablePasswordResetContext>();
 
-    const auth =
-        betterAuth({
-            database:
-                mongodbAdapter(
-                    input.database,
-                ),
+    const options:
+        BetterAuthOptions = {
+        database:
+            mongodbAdapter(
+                input.database,
+            ),
 
-            baseURL:
-                input.baseUrl,
+        baseURL:
+            input.baseUrl,
 
-            trustedOrigins:
-                [
-                    ...input.trustedOrigins,
-                ],
+        trustedOrigins:
+            [
+                ...input.trustedOrigins,
+            ],
 
-            secret:
-                input.secret,
+        secret:
+            input.secret,
 
-            emailAndPassword: {
-                enabled:
-                    true,
+        emailAndPassword: {
+            enabled:
+                true,
 
-                requireEmailVerification:
-                    true,
+            requireEmailVerification:
+                true,
 
-                /**
-                 * Password reset is an account-recovery operation.
-                 *
-                 * Every existing BetterAuth provider session is invalidated
-                 * after the password is successfully replaced.
-                 *
-                 * Identity-owned session state is revoked separately by the
-                 * Reset Password™ use case so both provider and canonical
-                 * session lifecycle state remain synchronized.
-                 */
-                revokeSessionsOnPasswordReset:
-                    true,
+            /**
+             * Password reset is an account-recovery operation.
+             *
+             * Every existing BetterAuth provider session is invalidated
+             * after the password is successfully replaced.
+             *
+             * Identity-owned session state is revoked separately by the
+             * Reset Password™ use case so both provider and canonical
+             * session lifecycle state remain synchronized.
+             */
+            revokeSessionsOnPasswordReset:
+                true,
 
-                async sendResetPassword(
-                    {
-                        user,
-                        url,
-                        token,
-                    },
-                ): Promise<void> {
-                    await input
-                        .sendResetPassword
-                        .send({
-                            email:
-                                user.email,
-
-                            url,
-
-                            token,
-                        });
+            async sendResetPassword(
+                {
+                    user,
+                    url,
+                    token,
                 },
-
-                async onPasswordReset(
-                    {
-                        user,
-                    }: {
-                        readonly user:
-                        BetterAuthPasswordResetUser;
-                    },
-                ): Promise<void> {
-                    const context =
-                        passwordResetContext.getStore();
-
-                    if (
-                        context ===
-                        undefined
-                    ) {
-                        throw new Error(
-                            [
-                                "BetterAuth password-reset confirmation",
-                                "was produced outside an active reset context.",
-                            ].join(
-                                " ",
-                            ),
-                        );
-                    }
-
-                    context.confirmation = {
-                        providerUserId:
-                            user.id,
-
+            ): Promise<void> {
+                await input
+                    .sendResetPassword
+                    .send({
                         email:
-                            user.email
-                                .trim()
-                                .toLowerCase(),
+                            user.email,
 
-                        confirmedAt:
-                            new Date()
-                                .toISOString(),
-                    };
-                },
-            },
-
-            emailVerification: {
-                sendOnSignUp:
-                    true,
-
-                autoSignInAfterVerification:
-                    false,
-
-                async sendVerificationEmail(
-                    {
-                        user,
                         url,
+
                         token,
-                    },
-                ): Promise<void> {
-                    await input
-                        .sendVerificationEmail
-                        .send({
-                            email:
-                                user.email,
-
-                            url,
-
-                            token,
-                        });
-                },
+                    });
             },
 
-            advanced: {
-                database: {
-                    generateId:
-                        false,
+            async onPasswordReset(
+                {
+                    user,
+                }: {
+                    readonly user:
+                    BetterAuthPasswordResetUser;
                 },
+            ): Promise<void> {
+                const context =
+                    passwordResetContext.getStore();
+
+                if (
+                    context ===
+                    undefined
+                ) {
+                    throw new Error(
+                        [
+                            "BetterAuth password-reset confirmation",
+                            "was produced outside an active reset context.",
+                        ].join(
+                            " ",
+                        ),
+                    );
+                }
+
+                context.confirmation = {
+                    providerUserId:
+                        user.id,
+
+                    email:
+                        user.email
+                            .trim()
+                            .toLowerCase(),
+
+                    confirmedAt:
+                        new Date()
+                            .toISOString(),
+                };
             },
-        });
+        },
+
+        emailVerification: {
+            sendOnSignUp:
+                true,
+
+            autoSignInAfterVerification:
+                false,
+
+            async sendVerificationEmail(
+                {
+                    user,
+                    url,
+                    token,
+                },
+            ): Promise<void> {
+                await input
+                    .sendVerificationEmail
+                    .send({
+                        email:
+                            user.email,
+
+                        url,
+
+                        token,
+                    });
+            },
+        },
+
+        advanced: {
+            database: {
+                generateId:
+                    () =>
+                        randomUUID(),
+            },
+        },
+    };
+
+    const auth =
+        betterAuth(
+            options,
+        );
 
     const resetPassword =
         auth.api.resetPassword.bind(
