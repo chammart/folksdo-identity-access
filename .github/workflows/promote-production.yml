@@ -164,17 +164,7 @@ jobs:
         with:
           ref: ${{ github.sha }}
 
-      - name: Upload production Compose definition
-        uses: appleboy/scp-action@v1.0.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_SSH_PORT }}
-          source: docker-compose.production.yml
-          target: ${{ secrets.VPS_DEPLOY_ROOT }}/${{ env.DEPLOY_PATH_SUFFIX }}
-          overwrite: true
-
+ 
       - name: Deploy exact certified image
         uses: appleboy/ssh-action@v1.2.0
         env:
@@ -202,7 +192,8 @@ jobs:
 
             test -f .env
             test -s .env
-            test -f docker-compose.production.yml
+            test -f docker-compose.yml
+            test -s docker-compose.yml
 
             mv -f docker-compose.production.yml docker-compose.yml
 
