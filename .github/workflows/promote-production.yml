@@ -1,20 +1,14 @@
 name: Promote Certified Folksdo IAM Image
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
-    inputs:
-      image_tag:
-        description: Immutable staging-certified IAM image tag
-        required: true
-        type: string
-      source_commit:
-        description: Certified source commit SHA
-        required: true
-        type: string
 
 permissions:
   contents: read
   packages: read
+  actions: read
 
 concurrency:
   group: folksdo-iam-production
@@ -28,44 +22,147 @@ env:
   READY_URL: http://127.0.0.1:3100/health/ready
 
 jobs:
-  verify-certified-image:
-    name: Verify Certified Image
+  resolve-certified-release:
+    name: Resolve Certified Staging Release
     runs-on: ubuntu-latest
-    environment: production
+
+    outputs:
+      image_tag: ${{ steps.release.outputs.image_tag }}
+      image_ref: ${{ steps.release.outputs.image_ref }}
+      image_digest: ${{ steps.release.outputs.image_digest }}
+      source_commit: ${{ steps.release.outputs.source_commit }}
 
     steps:
-      - name: Validate immutable staging tag
+      - name: Checkout production source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve staging-certified ancestor
+        id: release
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
-          case "${{ inputs.image_tag }}" in
-            staging-*) ;;
-            *)
-              echo "Only an immutable staging-certified IAM image may be promoted."
-              exit 1
-              ;;
-          esac
+          rm -rf .certified-release
+          mkdir -p .certified-release
 
-          if [ -z "${{ inputs.source_commit }}" ]; then
-            echo "source_commit is required."
+          FOUND=false
+
+          while IFS=$'\t' read -r RUN_ID HEAD_SHA; do
+            if [ -z "${RUN_ID}" ] || [ -z "${HEAD_SHA}" ]; then
+              continue
+            fi
+
+            if ! git merge-base --is-ancestor "${HEAD_SHA}" "${GITHUB_SHA}"; then
+              continue
+            fi
+
+            ARTIFACT_NAME="staging-certified-release-${HEAD_SHA}"
+
+            rm -rf .certified-release/*
+            mkdir -p .certified-release
+
+            if ! gh run download "${RUN_ID}" \
+              --name "${ARTIFACT_NAME}" \
+              --dir .certified-release; then
+              continue
+            fi
+
+            RELEASE_FILE=".certified-release/staging-certified-release.json"
+
+            if [ ! -s "${RELEASE_FILE}" ]; then
+              continue
+            fi
+
+            SOURCE_COMMIT="$(jq -r '.sourceCommit // empty' "${RELEASE_FILE}")"
+            IMAGE_TAG="$(jq -r '.image.tag // empty' "${RELEASE_FILE}")"
+            IMAGE_REF="$(jq -r '.image.ref // empty' "${RELEASE_FILE}")"
+            IMAGE_DIGEST="$(jq -r '.image.digest // empty' "${RELEASE_FILE}")"
+
+            if [ "${SOURCE_COMMIT}" != "${HEAD_SHA}" ]; then
+              echo "Certified release source commit mismatch."
+              exit 1
+            fi
+
+            case "${IMAGE_TAG}" in
+              staging-*) ;;
+              *)
+                echo "Certified release does not reference an immutable staging image."
+                exit 1
+                ;;
+            esac
+
+            EXPECTED_REF="${IMAGE_NAME}:${IMAGE_TAG}"
+
+            if [ "${IMAGE_REF}" != "${EXPECTED_REF}" ]; then
+              echo "Certified release image reference mismatch."
+              exit 1
+            fi
+
+            if [ -z "${IMAGE_DIGEST}" ]; then
+              echo "Certified release image digest is missing."
+              exit 1
+            fi
+
+            echo "source_commit=${SOURCE_COMMIT}" >> "${GITHUB_OUTPUT}"
+            echo "image_tag=${IMAGE_TAG}" >> "${GITHUB_OUTPUT}"
+            echo "image_ref=${IMAGE_REF}" >> "${GITHUB_OUTPUT}"
+            echo "image_digest=${IMAGE_DIGEST}" >> "${GITHUB_OUTPUT}"
+
+            echo "Resolved certified staging release:"
+            echo "  Source commit: ${SOURCE_COMMIT}"
+            echo "  Image: ${IMAGE_REF}"
+            echo "  Digest: ${IMAGE_DIGEST}"
+
+            FOUND=true
+            break
+          done < <(
+            gh run list \
+              --workflow deploy-staging.yml \
+              --branch develop \
+              --status success \
+              --limit 50 \
+              --json databaseId,headSha \
+              --jq '.[] | [.databaseId, .headSha] | @tsv'
+          )
+
+          if [ "${FOUND}" != "true" ]; then
+            echo "No staging-certified release is an ancestor of ${GITHUB_SHA}."
+            echo "Production promotion is blocked."
             exit 1
           fi
+
+      - name: Production promotion summary
+        shell: bash
+        run: |
+          {
+            echo "## Folksdo IAM Certified Promotion"
+            echo ""
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Main Commit | ${{ github.sha }} |"
+            echo "| Certified Source | ${{ steps.release.outputs.source_commit }} |"
+            echo "| Image | ${{ steps.release.outputs.image_ref }} |"
+            echo "| Digest | ${{ steps.release.outputs.image_digest }} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
 
   deploy-production:
     name: Deploy Production
     runs-on: ubuntu-latest
-    needs: verify-certified-image
+    needs: resolve-certified-release
 
     environment:
       name: production
       url: ${{ vars.IAM_PRODUCTION_BASE_URL }}
 
     steps:
-      - name: Checkout certified source
+      - name: Checkout production source
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.source_commit }}
+          ref: ${{ github.sha }}
 
       - name: Upload production Compose definition
         uses: appleboy/scp-action@v1.0.0
@@ -83,7 +180,7 @@ jobs:
         env:
           VPS_DEPLOY_ROOT: ${{ secrets.VPS_DEPLOY_ROOT }}
           DEPLOY_PATH_SUFFIX: ${{ env.DEPLOY_PATH_SUFFIX }}
-          IMAGE_TAG: ${{ inputs.image_tag }}
+          IMAGE_TAG: ${{ needs.resolve-certified-release.outputs.image_tag }}
           COMPOSE_PROJECT: ${{ env.COMPOSE_PROJECT_NAME }}
           HEALTH_URL: ${{ env.HEALTH_URL }}
           READY_URL: ${{ env.READY_URL }}
@@ -167,7 +264,7 @@ jobs:
   production-smoke:
     name: Production Smoke
     runs-on: ubuntu-latest
-    needs: deploy-production
+    needs: [resolve-certified-release, deploy-production]
 
     environment:
       name: production
@@ -198,3 +295,22 @@ jobs:
             >/dev/null
 
           echo "Folksdo IAM production smoke passed."
+
+      - name: Production release summary
+        shell: bash
+        run: |
+          {
+            echo "## Folksdo IAM Production"
+            echo ""
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Environment | production |"
+            echo "| Endpoint | ${{ vars.IAM_PRODUCTION_BASE_URL }} |"
+            echo "| Main Commit | ${{ github.sha }} |"
+            echo "| Certified Source | ${{ needs.resolve-certified-release.outputs.source_commit }} |"
+            echo "| Image | ${{ needs.resolve-certified-release.outputs.image_ref }} |"
+            echo "| Digest | ${{ needs.resolve-certified-release.outputs.image_digest }} |"
+            echo "| Health | Passed |"
+            echo "| Readiness | Passed |"
+            echo "| Production Smoke | Passed |"
+          } >> "${GITHUB_STEP_SUMMARY}"
