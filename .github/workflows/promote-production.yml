@@ -195,8 +195,7 @@ jobs:
             test -f docker-compose.yml
             test -s docker-compose.yml
 
-            mv -f docker-compose.production.yml docker-compose.yml
-
+            
             if grep -q '^FOLKSDO_IAM_IMAGE_TAG=' .env; then
               sed -i \
                 "s|^FOLKSDO_IAM_IMAGE_TAG=.*|FOLKSDO_IAM_IMAGE_TAG=${IMAGE_TAG}|" \
