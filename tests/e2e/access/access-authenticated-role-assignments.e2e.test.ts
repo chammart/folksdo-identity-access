@@ -301,6 +301,42 @@ describe(
                     offset: 0,
                 });
 
+                const personDetail =
+                    await runtime.server.app.inject({
+                        method: "GET",
+                        url: `/api/v1/tenants/${encodeURIComponent(certification.tenantId)}/people/${encodeURIComponent(certification.identity.userId)}`,
+                        headers: { authorization: `Bearer ${certification.sessionId}` },
+                    });
+
+                expect(personDetail.statusCode).toBe(200);
+                expect(personDetail.json()).toMatchObject({
+                    identity: expect.objectContaining({ userId: certification.identity.userId }),
+                    membership: expect.objectContaining({
+                        membership: expect.objectContaining({ membershipId: certification.membershipId, tenantId: certification.tenantId }),
+                        roles: expect.arrayContaining([expect.objectContaining({ roleId })]),
+                        directAccess: expect.any(Array),
+                        effectiveAccessSummary: expect.objectContaining({
+                            activeRoleCount: expect.any(Number),
+                            activeDirectGrantCount: expect.any(Number),
+                            activeDirectDenyCount: expect.any(Number),
+                        }),
+                    }),
+                    security: expect.objectContaining({
+                        userId: certification.identity.userId,
+                        emailVerified: expect.any(Boolean),
+                        sessions: expect.objectContaining({ total: expect.any(Number), active: expect.any(Number) }),
+                    }),
+                });
+
+                const crossTenantPersonDetail =
+                    await runtime.server.app.inject({
+                        method: "GET",
+                        url: `/api/v1/tenants/${randomUUID()}/people/${encodeURIComponent(certification.identity.userId)}`,
+                        headers: { authorization: `Bearer ${certification.sessionId}` },
+                    });
+
+                expect(crossTenantPersonDetail.statusCode).toBe(403);
+
                 const crossTenantPeople =
                     await runtime.server.app.inject({
                         method: "GET",

@@ -30,6 +30,7 @@ import type {
 } from "../known-invitations";
 
 import type {
+    IdentityAdministrationSessionReadStore,
     IdentityCredentialReadStore,
     IdentityPasswordResetSessionReadStore,
     IdentityReadStore,
@@ -55,6 +56,7 @@ import {
     createVerifyEmailUseCase,
     createGetIdentityForProviderUseCase,
     createGetIdentityForTenantAdministrationUseCase,
+    createGetIdentitySecuritySummaryUseCase,
     createListIdentitiesForProviderUseCase,
     type IdentityCollections,
     type IdentityIdGenerator,
@@ -89,7 +91,8 @@ export interface CreateIdentityRuntimeInput {
 
     readonly readStore:
     IdentityReadStore
-    & IdentityPasswordResetSessionReadStore;
+    & IdentityPasswordResetSessionReadStore
+    & IdentityAdministrationSessionReadStore;
 
     readonly credentialReadStore:
     IdentityCredentialReadStore;
@@ -254,6 +257,12 @@ export function createIdentityRuntime(
 
     const getIdentityForTenantAdministrationUseCase =
         createGetIdentityForTenantAdministrationUseCase({
+            readStore: input.readStore,
+            authorization,
+        });
+
+    const getIdentitySecuritySummaryUseCase =
+        createGetIdentitySecuritySummaryUseCase({
             readStore: input.readStore,
             authorization,
         });
@@ -443,6 +452,8 @@ export function createIdentityRuntime(
                 getIdentityForProviderUseCase,
 
                 getIdentityForTenantAdministrationUseCase,
+
+                getIdentitySecuritySummaryUseCase,
 
                 listIdentitiesForProviderUseCase,
             }),

@@ -19,6 +19,7 @@ import type {
 } from "../state";
 
 import type {
+    IdentityAdministrationSessionReadStore,
     IdentityCredentialReadStore,
     IdentityPasswordResetSessionReadStore,
     IdentityReadStore,
@@ -62,7 +63,8 @@ export function createMongoIdentityReadStore(
 ):
     IdentityReadStore
     & IdentityCredentialReadStore
-    & IdentityPasswordResetSessionReadStore {
+    & IdentityPasswordResetSessionReadStore
+    & IdentityAdministrationSessionReadStore {
     const users =
         input.database.collection<IdentityUserState>(
             input.collections.users,
@@ -140,6 +142,16 @@ export function createMongoIdentityReadStore(
             return await sessions.findOne({
                 sessionId,
             });
+        },
+
+        async listSessionsByUserId(
+            userId:
+                string,
+        ): Promise<readonly IdentitySessionState[]> {
+            return await sessions
+                .find({ userId })
+                .sort({ issuedAt: 1, sessionId: 1 })
+                .toArray();
         },
 
         async listActiveSessionsByUserId(

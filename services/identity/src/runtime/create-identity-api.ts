@@ -22,6 +22,7 @@ import type {
     GetIdentityForProviderUseCase,
     ListIdentitiesForProviderUseCase,
     GetIdentityForTenantAdministrationUseCase,
+    GetIdentitySecuritySummaryUseCase,
 } from "../usecases";
 
 // -----------------------------------------------------------------------------
@@ -64,6 +65,9 @@ export interface CreateIdentityApiInput {
 
     readonly getIdentityForTenantAdministrationUseCase:
     GetIdentityForTenantAdministrationUseCase;
+
+    readonly getIdentitySecuritySummaryUseCase:
+    GetIdentitySecuritySummaryUseCase;
 }
 
 // -----------------------------------------------------------------------------
@@ -192,6 +196,10 @@ export function createIdentityApi(
                 { userId }, context, security,
             );
             return { ...user };
+        },
+
+        async getIdentitySecuritySummary(userId, context, security) {
+            return await input.getIdentitySecuritySummaryUseCase.execute(userId, context, security);
         },
 
         async getIdentityForProvider(

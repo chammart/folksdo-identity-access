@@ -54,6 +54,19 @@ export interface IdentityPasswordResetSessionReadStore {
 }
 
 // -----------------------------------------------------------------------------
+// ADMINISTRATION SESSION READ STORE
+// -----------------------------------------------------------------------------
+// Narrow dependency for safe administration session summaries.
+// -----------------------------------------------------------------------------
+
+export interface IdentityAdministrationSessionReadStore {
+    listSessionsByUserId(
+        userId:
+            string,
+    ): Promise<readonly IdentitySessionState[]>;
+}
+
+// -----------------------------------------------------------------------------
 // GENERAL IDENTITY READ STORE
 // -----------------------------------------------------------------------------
 

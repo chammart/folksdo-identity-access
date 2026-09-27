@@ -16,3 +16,4 @@ export * from "./change-password-usecase";
 export * from "./get-identity-for-provider-usecase";
 export * from "./get-identity-for-tenant-administration-usecase";
 export * from "./list-identities-for-provider-usecase";
+export * from "./get-identity-security-summary-usecase";

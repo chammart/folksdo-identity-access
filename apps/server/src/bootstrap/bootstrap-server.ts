@@ -19,6 +19,7 @@ import { createIdentityAccessAuthorizer } from "../authorization/create-identity
 import { createMembershipAccessAuthorizer } from "../authorization/create-membership-access-authorizer";
 import type { ServerConfig } from "../config/server-config";
 import { registerTenantPeopleRoutes } from "./register-tenant-people-routes";
+import { registerIamPersonDetailRoutes } from "./register-iam-person-detail-routes";
 
 export interface ServerRuntime {
     readonly app: FastifyInstance;
@@ -78,19 +79,20 @@ async function bootstrapServices(input: {
     });
 
     const identityAccessAuthorizer = createIdentityAccessAuthorizer();
+    const identityProviderReadSecurityResolver = createAuthenticatedIdentityProviderReadSecurityResolver({
+        engine: input.platformRuntime.engine.engine,
+        authenticatedContextResolver: authenticatedIdentityContextResolver,
+        getMembershipApi() {
+            if (membershipApi === undefined) throw new Error("Membership API is unavailable during Identity provider-read initialization.");
+            return membershipApi;
+        },
+    });
     const identityRuntime = await bootstrapIdentityService({
         app: input.app,
         platformRuntime: input.platformRuntime,
         config: input.config.identity,
         authenticatedContextResolver: authenticatedIdentityContextResolver,
-        providerReadSecurityResolver: createAuthenticatedIdentityProviderReadSecurityResolver({
-            engine: input.platformRuntime.engine.engine,
-            authenticatedContextResolver: authenticatedIdentityContextResolver,
-            getMembershipApi() {
-                if (membershipApi === undefined) throw new Error("Membership API is unavailable during Identity provider-read initialization.");
-                return membershipApi;
-            },
-        }),
+        providerReadSecurityResolver: identityProviderReadSecurityResolver,
         accessAuthorizer: identityAccessAuthorizer,
     });
     identityApi = identityRuntime.api;
@@ -134,6 +136,18 @@ async function bootstrapServices(input: {
             engine: input.platformRuntime.engine.engine,
             identityApi: identityRuntime.api,
         }),
+    });
+
+    registerIamPersonDetailRoutes({
+        app: input.app,
+        identityApi: identityRuntime.api,
+        membershipApi: membershipRuntime.api,
+        accessApi: accessRuntime.components.api,
+        tenantContextResolver: createAuthenticatedMembershipContextResolver({
+            engine: input.platformRuntime.engine.engine,
+            identityApi: identityRuntime.api,
+        }),
+        providerSecurityResolver: identityProviderReadSecurityResolver,
     });
     return {
         membershipRuntime,
