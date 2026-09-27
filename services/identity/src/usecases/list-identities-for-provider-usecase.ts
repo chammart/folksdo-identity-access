@@ -6,7 +6,9 @@ import type { IdentityUserStatus } from "../state";
 import type { IdentityProviderReadSecurity } from "./get-identity-for-provider-usecase";
 
 export interface ListIdentitiesForProviderRequest {
+    readonly search?: string;
     readonly status?: IdentityUserStatus;
+    readonly emailVerified?: boolean;
     readonly offset: number;
     readonly limit: number;
 }

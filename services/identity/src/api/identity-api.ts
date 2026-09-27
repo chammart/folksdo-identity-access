@@ -112,7 +112,7 @@ export interface IdentityApi {
     ): Promise<ProviderIdentityResponse>;
 
     listIdentitiesForProvider(
-        input: { readonly status?: "pending_email_verification" | "active" | "suspended" | "disabled"; readonly offset: number; readonly limit: number; },
+        input: { readonly search?: string; readonly status?: "pending_email_verification" | "active" | "suspended" | "disabled"; readonly emailVerified?: boolean; readonly offset: number; readonly limit: number; },
         context: RuntimeContext,
         security: IdentityProviderReadSecurity,
     ): Promise<ProviderIdentityListResponse>;

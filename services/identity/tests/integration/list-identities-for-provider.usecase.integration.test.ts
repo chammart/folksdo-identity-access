@@ -21,7 +21,12 @@ describe("List Identities For Provider™ use case", () => {
         const runtime = await getIamIntegrationRuntime();
         await grantProviderIdentityReads(identity);
 
-        const response = await getJson(runtime, "/api/v1/identities?status=active&offset=0&limit=25", sessionId);
+        const search = identity.email.split("@")[0];
+        const response = await getJson(
+            runtime,
+            `/api/v1/identities?search=${encodeURIComponent(search)}&status=active&emailVerified=true&offset=0&limit=25`,
+            sessionId,
+        );
         expectStatus(response, 200);
 
         const body = response.json<{
@@ -32,7 +37,12 @@ describe("List Identities For Provider™ use case", () => {
         }>();
         expect(body).toMatchObject({ total: 1, offset: 0, limit: 25 });
         expect(body.items).toHaveLength(1);
-        expect(body.items[0]).toMatchObject({ userId: identity.userId, status: "active" });
+        expect(body.items[0]).toMatchObject({
+            userId: identity.userId,
+            email: identity.email,
+            status: "active",
+            emailVerified: true,
+        });
         expect(JSON.stringify(body)).not.toContain("providerCredentialId");
         expect(JSON.stringify(body)).not.toContain("password");
     });

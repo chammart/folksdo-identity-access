@@ -261,7 +261,9 @@ const providerIdentityUserIdSchema = z.object({
 }).strict();
 
 const providerIdentityListQuerySchema = z.object({
+    search: z.string().trim().min(1).max(200).optional(),
     status: z.enum(["pending_email_verification", "active", "suspended", "disabled"]).optional(),
+    emailVerified: z.enum(["true", "false"]).transform(value => value === "true").optional(),
     offset: z.coerce.number().int().min(0).default(0),
     limit: z.coerce.number().int().min(1).max(200).default(100),
 }).strict();

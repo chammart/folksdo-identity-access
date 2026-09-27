@@ -179,14 +179,43 @@ export function createMongoIdentityReadStore(
             input:
                 ListUsersInput,
         ): Promise<ListUsersResult> {
+            const search =
+                input.search?.trim();
+
+            const escapedSearch =
+                search
+                    ? search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+                    : undefined;
+
             const filter:
-                Filter<IdentityUserState> =
-                input.status
-                    ? {
-                        status:
-                            input.status,
-                    }
-                    : {};
+                Filter<IdentityUserState> = {
+                    ...(input.status !== undefined
+                        ? { status: input.status }
+                        : {}),
+
+                    ...(input.emailVerified !== undefined
+                        ? { emailVerified: input.emailVerified }
+                        : {}),
+
+                    ...(escapedSearch !== undefined
+                        ? {
+                            $or: [
+                                {
+                                    email: {
+                                        $regex: escapedSearch,
+                                        $options: "i",
+                                    },
+                                },
+                                {
+                                    userId: {
+                                        $regex: escapedSearch,
+                                        $options: "i",
+                                    },
+                                },
+                            ],
+                        }
+                        : {}),
+                };
 
             const total =
                 await users.countDocuments(

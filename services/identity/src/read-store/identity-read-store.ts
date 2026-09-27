@@ -89,8 +89,14 @@ export interface IdentityReadStore {
 // -----------------------------------------------------------------------------
 
 export interface ListUsersInput {
+    readonly search?:
+    string;
+
     readonly status?:
     IdentityUserStatus;
+
+    readonly emailVerified?:
+    boolean;
 
     readonly offset:
     number;
