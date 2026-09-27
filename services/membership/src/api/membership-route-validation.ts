@@ -133,6 +133,10 @@ const switchMembershipContextRequestSchema =
         .strict();
 
 
+const providerMembershipDateSchema =
+    z.string()
+        .datetime({ offset: true });
+
 const listMembershipsForProviderQuerySchema =
     z.object({
         tenantId:
@@ -140,18 +144,66 @@ const listMembershipsForProviderQuerySchema =
 
         identityId:
             identifierSchema.optional(),
+
+        status:
+            z.enum([
+                "pending",
+                "active",
+                "suspended",
+                "archived",
+            ]).optional(),
+
+        membershipType:
+            membershipTypeSchema.optional(),
+
+        createdFrom:
+            providerMembershipDateSchema.optional(),
+
+        createdTo:
+            providerMembershipDateSchema.optional(),
+
+        updatedFrom:
+            providerMembershipDateSchema.optional(),
+
+        updatedTo:
+            providerMembershipDateSchema.optional(),
+
+        offset:
+            z.coerce.number()
+                .int()
+                .min(0)
+                .default(0),
+
+        limit:
+            z.coerce.number()
+                .int()
+                .min(1)
+                .max(100)
+                .default(50),
     })
         .strict()
         .superRefine((value, context) => {
-            const filterCount =
-                Number(value.tenantId !== undefined)
-                + Number(value.identityId !== undefined);
-
-            if (filterCount !== 1) {
+            if (
+                value.createdFrom !== undefined
+                && value.createdTo !== undefined
+                && value.createdFrom > value.createdTo
+            ) {
                 context.addIssue({
                     code: z.ZodIssueCode.custom,
                     message:
-                        "Exactly one of tenantId or identityId is required.",
+                        "createdFrom must be before or equal to createdTo.",
+                });
+            }
+
+            if (
+                value.updatedFrom !== undefined
+                && value.updatedTo !== undefined
+                && value.updatedFrom > value.updatedTo
+            ) {
+                context.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message:
+                        "updatedFrom must be before or equal to updatedTo.",
                 });
             }
         });

@@ -614,10 +614,18 @@ export function createMembershipApi(
                 context,
             );
 
-            return input.listMembershipsForProviderUseCase.execute(
-                request,
-                context,
-            );
+            const result =
+                await input.listMembershipsForProviderUseCase.execute(
+                    request,
+                    context,
+                );
+
+            return {
+                items: result.memberships,
+                total: result.total,
+                offset: request.offset,
+                limit: request.limit,
+            };
         },
 
         // ---------------------------------------------------------------------

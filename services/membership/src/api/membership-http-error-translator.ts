@@ -87,8 +87,8 @@ export function translateMembershipHttpError(
     ) {
         return toHttpError(
             400,
-            "invalid_request",
-            "Request body is invalid.",
+            "validation_error",
+            "Request validation failed.",
         );
     }
 

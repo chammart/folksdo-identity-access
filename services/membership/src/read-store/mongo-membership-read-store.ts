@@ -14,6 +14,7 @@
 
 import type {
     Db,
+    Filter,
 } from "mongodb";
 
 import type {
@@ -106,6 +107,72 @@ export function createMongoMembershipReadStore(
                     membershipId: 1,
                 })
                 .toArray();
+        },
+
+        async listMemberships(input) {
+            const filter: Filter<MembershipState> = {
+                ...(input.tenantId !== undefined
+                    ? { tenantId: input.tenantId }
+                    : {}),
+                ...(input.identityId !== undefined
+                    ? { identityId: input.identityId }
+                    : {}),
+                ...(input.status !== undefined
+                    ? { status: input.status }
+                    : {}),
+                ...(input.membershipType !== undefined
+                    ? { membershipType: input.membershipType }
+                    : {}),
+                ...(
+                    input.createdFrom !== undefined
+                    || input.createdTo !== undefined
+                        ? {
+                            createdAt: {
+                                ...(input.createdFrom !== undefined
+                                    ? { $gte: input.createdFrom }
+                                    : {}),
+                                ...(input.createdTo !== undefined
+                                    ? { $lte: input.createdTo }
+                                    : {}),
+                            },
+                        }
+                        : {}
+                ),
+                ...(
+                    input.updatedFrom !== undefined
+                    || input.updatedTo !== undefined
+                        ? {
+                            updatedAt: {
+                                ...(input.updatedFrom !== undefined
+                                    ? { $gte: input.updatedFrom }
+                                    : {}),
+                                ...(input.updatedTo !== undefined
+                                    ? { $lte: input.updatedTo }
+                                    : {}),
+                            },
+                        }
+                        : {}
+                ),
+            };
+
+            const [items, total] =
+                await Promise.all([
+                    memberships
+                        .find(filter)
+                        .sort({
+                            createdAt: -1,
+                            membershipId: 1,
+                        })
+                        .skip(input.offset)
+                        .limit(input.limit)
+                        .toArray(),
+                    memberships.countDocuments(filter),
+                ]);
+
+            return {
+                memberships: items,
+                total,
+            };
         },
 
         async findInvitationById(
@@ -220,6 +287,29 @@ export async function ensureMembershipIndexes(
             },
             {
                 name: "membership_tenant_status_created_at",
+            },
+        ),
+
+        memberships.createIndex(
+            {
+                status: 1,
+                createdAt: -1,
+                membershipId: 1,
+            },
+            {
+                name: "membership_provider_status_created_at",
+            },
+        ),
+
+        memberships.createIndex(
+            {
+                membershipType: 1,
+                status: 1,
+                createdAt: -1,
+                membershipId: 1,
+            },
+            {
+                name: "membership_provider_type_status_created_at",
             },
         ),
 

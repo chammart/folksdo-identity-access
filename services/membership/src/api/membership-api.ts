@@ -61,6 +61,13 @@ export interface RedeemedInvitationResult {
     readonly membership: MembershipResult;
 }
 
+export interface ProviderMembershipListResponse {
+    readonly items: readonly MembershipResult[];
+    readonly total: number;
+    readonly offset: number;
+    readonly limit: number;
+}
+
 // -----------------------------------------------------------------------------
 // PUBLIC API
 // -----------------------------------------------------------------------------
@@ -139,7 +146,7 @@ export interface MembershipApi {
         input: ListMembershipsForProviderRequest,
         context: RuntimeContext,
         security: MembershipProviderReadSecurity,
-    ): Promise<readonly MembershipResult[]>;
+    ): Promise<ProviderMembershipListResponse>;
 
     // -------------------------------------------------------------------------
     // ACTIVE MEMBERSHIP CONTEXT

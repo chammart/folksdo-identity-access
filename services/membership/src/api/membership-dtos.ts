@@ -75,15 +75,18 @@ export interface SwitchMembershipContextRequest {
 }
 
 
-export type ListMembershipsForProviderRequest =
-    | {
-        readonly tenantId: string;
-        readonly identityId?: never;
-    }
-    | {
-        readonly tenantId?: never;
-        readonly identityId: string;
-    };
+export interface ListMembershipsForProviderRequest {
+    readonly tenantId?: string;
+    readonly identityId?: string;
+    readonly status?: MembershipStatus;
+    readonly membershipType?: MembershipType;
+    readonly createdFrom?: string;
+    readonly createdTo?: string;
+    readonly updatedFrom?: string;
+    readonly updatedTo?: string;
+    readonly offset: number;
+    readonly limit: number;
+}
 
 // -----------------------------------------------------------------------------
 // MEMBERSHIP RESULTS

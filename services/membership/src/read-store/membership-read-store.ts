@@ -17,7 +17,27 @@ import type {
     InvitationState,
     MembershipContextState,
     MembershipState,
+    MembershipStatus,
+    MembershipType,
 } from "../state";
+
+export interface ListMembershipsInput {
+    readonly tenantId?: string;
+    readonly identityId?: string;
+    readonly status?: MembershipStatus;
+    readonly membershipType?: MembershipType;
+    readonly createdFrom?: string;
+    readonly createdTo?: string;
+    readonly updatedFrom?: string;
+    readonly updatedTo?: string;
+    readonly offset: number;
+    readonly limit: number;
+}
+
+export interface ListMembershipsResult {
+    readonly memberships: readonly MembershipState[];
+    readonly total: number;
+}
 
 // -----------------------------------------------------------------------------
 // PUBLIC CONTRACT
@@ -52,6 +72,13 @@ export interface MembershipReadStore {
     listMembershipsByTenant(
         tenantId: string,
     ): Promise<readonly MembershipState[]>;
+
+    /**
+     * List Memberships for authorized Provider administration.
+     */
+    listMemberships(
+        input: ListMembershipsInput,
+    ): Promise<ListMembershipsResult>;
 
     /**
      * Resolve an invitation by its canonical invitation identifier.
