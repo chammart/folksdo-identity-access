@@ -78,6 +78,24 @@ export interface ListRoleAssignmentsPageInput
     readonly identityId?: string;
 }
 
+export interface ListRoleAssignmentsAdministrationInput {
+    readonly roleId?: string;
+    readonly membershipId?: string;
+    readonly identityId?: string;
+    readonly tenantId?: string;
+    readonly status?: RoleAssignmentState["status"];
+    readonly expiresBefore?: string;
+    readonly limit?: number;
+    readonly offset?: number;
+    readonly sortBy?: "assignedAt" | "expiresAt" | "updatedAt";
+    readonly sortDirection?: "asc" | "desc";
+}
+
+export interface RoleAssignmentAdministrationPage {
+    readonly items: readonly RoleAssignmentState[];
+    readonly total: number;
+}
+
 export interface ListPermissionAssignmentsPageInput
     extends AccessPageRequest {
     readonly membershipId?: string;
@@ -207,6 +225,14 @@ export interface AccessQueryReadStore {
     listRoleAssignmentsPage(
         input?: ListRoleAssignmentsPageInput,
     ): Promise<AccessPage<RoleAssignmentState>>;
+
+    /**
+     * Administration-oriented Role Assignment query used by Tenant and
+     * Provider administration experiences.
+     */
+    listRoleAssignmentsForAdministration(
+        input?: ListRoleAssignmentsAdministrationInput,
+    ): Promise<RoleAssignmentAdministrationPage>;
 
     // -------------------------------------------------------------------------
     // PERMISSION ASSIGNMENTS

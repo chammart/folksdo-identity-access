@@ -1195,17 +1195,44 @@ export interface AccessPaginationQuery {
 /**
  * Parses optional pagination fields from an already-validated query object.
  */
+function parseAccessQueryInteger(
+    value: unknown,
+): unknown {
+    if (
+        typeof value !== "string"
+        || !/^(0|[1-9]\d*)$/.test(
+            value,
+        )
+    ) {
+        return value;
+    }
+
+    return Number(
+        value,
+    );
+}
+
 export function parseAccessPagination(
     value: AccessUnknownObject,
     path: string,
 ): AccessValidationResult<AccessPaginationQuery> {
+    const limitValue =
+        parseAccessQueryInteger(
+            value.limit,
+        );
+
+    const offsetValue =
+        parseAccessQueryInteger(
+            value.offset,
+        );
+
     const limitResult =
         value.limit === undefined
             ? accessValidationSuccess<number | undefined>(
                 undefined,
             )
             : accessPageLimitSchema.parse(
-                value.limit,
+                limitValue,
                 accessValidationPath(
                     path,
                     "limit",
@@ -1218,7 +1245,7 @@ export function parseAccessPagination(
                 undefined,
             )
             : accessPageOffsetSchema.parse(
-                value.offset,
+                offsetValue,
                 accessValidationPath(
                     path,
                     "offset",

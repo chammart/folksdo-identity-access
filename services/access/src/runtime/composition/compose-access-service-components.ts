@@ -2185,115 +2185,79 @@ function createAccessApiOperations(
                 "role-assignment",
             );
 
-            if (
-                context.tenant?.tenantType
-                === "platform"
-            ) {
-                const subjectType =
-                    query.subjectType as
-                    | "identity"
-                    | "membership"
-                    | undefined;
+            const subjectType =
+                query.subjectType as
+                | "identity"
+                | "membership"
+                | undefined;
 
-                const subjectId =
-                    query.subjectId as string | undefined;
+            const subjectId =
+                query.subjectId as string | undefined;
 
-                const membershipId =
-                    query.membershipId as string | undefined
-                    ?? (subjectType === "membership" ? subjectId : undefined);
+            const membershipId =
+                query.membershipId as string | undefined
+                ?? (subjectType === "membership" ? subjectId : undefined);
 
-                const identityId =
-                    query.identityId as string | undefined
-                    ?? (subjectType === "identity" ? subjectId : undefined);
-
-                const assignments =
-                    await input.readStore.listRoleAssignments(
-                        membershipId,
-                        identityId,
-                    );
-
-                const expiresBefore =
-                    typeof query.expiresBefore === "string"
-                        ? Date.parse(query.expiresBefore)
-                        : undefined;
-
-                const filtered =
-                    assignments
-                        .filter(
-                            assignment =>
-                                query.tenantId === undefined
-                                || assignment.tenantId
-                                === query.tenantId,
-                        )
-                        .filter(
-                            assignment =>
-                                query.roleId === undefined
-                                || assignment.roleId
-                                === query.roleId,
-                        )
-                        .filter(
-                            assignment =>
-                                query.status === undefined
-                                || assignment.status
-                                === (query.status as "pending" | "active" | "suspended" | "removed" | "expired" | "archived"),
-                        )
-                        .filter(
-                            assignment =>
-                                expiresBefore === undefined
-                                || (
-                                    assignment.expiresAt !== undefined
-                                    && Date.parse(
-                                        assignment.expiresAt,
-                                    ) < expiresBefore
-                                ),
-                        );
-
-                const offset =
-                    typeof query.offset === "number"
-                        ? query.offset
-                        : 0;
-
-                const limit =
-                    typeof query.limit === "number"
-                        ? query.limit
-                        : filtered.length;
-
-                const items =
-                    filtered.slice(
-                        offset,
-                        offset + limit,
-                    );
-
-                return {
-                    items,
-                    count:
-                        items.length,
-                    total:
-                        filtered.length,
-                    limit,
-                    offset,
-                };
-            }
+            const identityId =
+                query.identityId as string | undefined
+                ?? (subjectType === "identity" ? subjectId : undefined);
 
             const tenantId =
-                requireTenantAdministrativeContext(
-                    context,
-                ).tenantId;
+                context.tenant?.tenantType === "platform"
+                    ? query.tenantId as string | undefined
+                    : requireTenantAdministrativeContext(
+                        context,
+                    ).tenantId;
 
-            const assignments =
-                await input.readStore.listRoleAssignments(
-                    query.membershipId as string | undefined,
-                    query.identityId as string | undefined,
-                );
+            const page =
+                await input.readStore.listRoleAssignmentsForAdministration({
+                    roleId:
+                        query.roleId as string | undefined,
+                    membershipId,
+                    identityId,
+                    tenantId,
+                    status:
+                        query.status as
+                        | "pending"
+                        | "active"
+                        | "suspended"
+                        | "removed"
+                        | "expired"
+                        | "archived"
+                        | undefined,
+                    expiresBefore:
+                        query.expiresBefore as string | undefined,
+                    limit:
+                        query.limit as number | undefined,
+                    offset:
+                        query.offset as number | undefined,
+                    sortBy:
+                        query.sortBy as
+                        | "assignedAt"
+                        | "expiresAt"
+                        | "updatedAt"
+                        | undefined,
+                    sortDirection:
+                        query.sortDirection as
+                        | "asc"
+                        | "desc"
+                        | undefined,
+                });
 
-            const items =
-                assignments.filter(
-                    assignment =>
-                        assignment.tenantId
-                        === tenantId,
-                );
-
-            return { items, count: items.length, limit: query.limit, offset: query.offset };
+            return {
+                items:
+                    page.items,
+                count:
+                    page.items.length,
+                total:
+                    page.total,
+                limit:
+                    query.limit as number | undefined
+                    ?? 50,
+                offset:
+                    query.offset as number | undefined
+                    ?? 0,
+            };
         },
 
         grantPermission: async (request: Record<string, unknown>, context: AccessApiRequestContext) => {

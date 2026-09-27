@@ -148,6 +148,87 @@ describe(
                         ),
                 });
 
+                const usage =
+                    await accessHttp(
+                        certification.sessionId,
+                        "GET",
+                        `/role-assignments?roleId=${encodeURIComponent(
+                            roleId,
+                        )}&status=active&limit=1&offset=0`,
+                    );
+
+                expect(
+                    usage.statusCode,
+                ).toBe(
+                    200,
+                );
+
+                expect(
+                    usage.json(),
+                ).toMatchObject({
+                    items: [
+                        expect.objectContaining({
+                            assignmentId,
+                            roleId,
+                            membershipId:
+                                certification.membershipId,
+                            status:
+                                "active",
+                        }),
+                    ],
+                    count:
+                        1,
+                    total:
+                        expect.any(
+                            Number,
+                        ),
+                    limit:
+                        1,
+                    offset:
+                        0,
+                });
+
+                expect(
+                    usage.json().total,
+                ).toBeGreaterThanOrEqual(
+                    1,
+                );
+
+                const byIdentity =
+                    await accessHttp(
+                        certification.sessionId,
+                        "GET",
+                        `/role-assignments?identityId=${encodeURIComponent(
+                            certification.identity.userId,
+                        )}&roleId=${encodeURIComponent(
+                            roleId,
+                        )}`,
+                    );
+
+                expect(
+                    byIdentity.statusCode,
+                ).toBe(
+                    200,
+                );
+
+                expect(
+                    byIdentity.json(),
+                ).toMatchObject({
+                    items:
+                        expect.arrayContaining([
+                            expect.objectContaining({
+                                assignmentId,
+                                roleId,
+                                membershipId:
+                                    certification.membershipId,
+                            }),
+                        ]),
+                    total:
+                        expect.any(
+                            Number,
+                        ),
+                });
+
                 const removed =
                     await accessHttp(
                         certification.sessionId,

@@ -33,9 +33,11 @@
 import type {
     Db,
     Filter,
+    Sort,
 } from "mongodb";
 
 import type {
+    RoleAssignmentState,
     RoleState,
 } from "../state";
 
@@ -46,6 +48,7 @@ import type {
     ListPermissionsPageInput,
     ListPoliciesPageInput,
     ListRestrictionsPageInput,
+    ListRoleAssignmentsAdministrationInput,
     ListRoleAssignmentsPageInput,
     ListRolesPageInput,
 } from "./access-read-store";
@@ -385,6 +388,112 @@ export function createMongoAccessReadStore(
 
                 page,
             }),
+
+        listRoleAssignmentsForAdministration: async (
+            input: ListRoleAssignmentsAdministrationInput = {},
+        ) => {
+            let membershipIds: readonly string[] | undefined;
+
+            if (input.identityId !== undefined) {
+                const memberships =
+                    await knownMemberships
+                        .find({
+                            identityId:
+                                input.identityId,
+                            ...(input.tenantId === undefined
+                                ? {}
+                                : { tenantId: input.tenantId }),
+                        })
+                        .project<{ membershipId: string }>({
+                            membershipId: 1,
+                        })
+                        .toArray();
+
+                membershipIds =
+                    memberships.map(
+                        membership =>
+                            membership.membershipId,
+                    );
+
+                if (membershipIds.length === 0) {
+                    return {
+                        items: [],
+                        total: 0,
+                    };
+                }
+            }
+
+            if (
+                input.membershipId !== undefined
+                && membershipIds !== undefined
+                && !membershipIds.includes(
+                    input.membershipId,
+                )
+            ) {
+                return {
+                    items: [],
+                    total: 0,
+                };
+            }
+
+            const filter: Filter<RoleAssignmentState> = {
+                ...(input.roleId === undefined
+                    ? {}
+                    : { roleId: input.roleId }),
+                ...(input.membershipId !== undefined
+                    ? { membershipId: input.membershipId }
+                    : membershipIds === undefined
+                        ? {}
+                        : { membershipId: { $in: [...membershipIds] } }),
+                ...(input.tenantId === undefined
+                    ? {}
+                    : { tenantId: input.tenantId }),
+                ...(input.status === undefined
+                    ? {}
+                    : { status: input.status }),
+                ...(input.expiresBefore === undefined
+                    ? {}
+                    : {
+                        expiresAt: {
+                            $exists: true,
+                            $lt: input.expiresBefore,
+                        },
+                    }),
+            };
+
+            const direction =
+                input.sortDirection === "desc"
+                    ? -1
+                    : 1;
+
+            const sortField =
+                input.sortBy === "expiresAt"
+                    ? "expiresAt"
+                    : input.sortBy === "updatedAt"
+                        ? "updatedAt"
+                        : "effectiveFrom";
+
+            const sort: Sort = {
+                [sortField]: direction,
+                assignmentId: direction,
+            };
+
+            const offset = input.offset ?? 0;
+            const limit = input.limit ?? 50;
+
+            const [items, total] =
+                await Promise.all([
+                    roleAssignments
+                        .find(filter)
+                        .sort(sort)
+                        .skip(offset)
+                        .limit(limit)
+                        .toArray(),
+                    roleAssignments.countDocuments(filter),
+                ]);
+
+            return { items, total };
+        },
 
         // ---------------------------------------------------------------------
         // PERMISSION ASSIGNMENTS
