@@ -8,9 +8,19 @@ export interface IdentityPlatformAuthorizationScope {
     readonly membershipId: string;
 }
 
+export interface IdentityTenantAuthorizationScope {
+    readonly type: "tenant";
+    readonly tenantId: string;
+    readonly membershipId: string;
+}
+
+export type IdentityAuthorizationScope =
+    | IdentityPlatformAuthorizationScope
+    | IdentityTenantAuthorizationScope;
+
 export interface IdentityAccessAuthorizationRequest {
     readonly permission: IdentityPermission;
-    readonly scope: IdentityPlatformAuthorizationScope;
+    readonly scope: IdentityAuthorizationScope;
     readonly resource: { readonly type: "identity"; readonly id?: string; };
 }
 

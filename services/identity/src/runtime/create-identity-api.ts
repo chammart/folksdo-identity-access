@@ -21,6 +21,7 @@ import type {
     VerifyEmailUseCase,
     GetIdentityForProviderUseCase,
     ListIdentitiesForProviderUseCase,
+    GetIdentityForTenantAdministrationUseCase,
 } from "../usecases";
 
 // -----------------------------------------------------------------------------
@@ -60,6 +61,9 @@ export interface CreateIdentityApiInput {
 
     readonly listIdentitiesForProviderUseCase:
     ListIdentitiesForProviderUseCase;
+
+    readonly getIdentityForTenantAdministrationUseCase:
+    GetIdentityForTenantAdministrationUseCase;
 }
 
 // -----------------------------------------------------------------------------
@@ -177,6 +181,17 @@ export function createIdentityApi(
                     request,
                     context,
                 );
+        },
+
+        async getIdentityForTenantAdministration(
+            userId,
+            context,
+            security,
+        ) {
+            const user = await input.getIdentityForTenantAdministrationUseCase.execute(
+                { userId }, context, security,
+            );
+            return { ...user };
         },
 
         async getIdentityForProvider(

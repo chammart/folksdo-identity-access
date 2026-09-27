@@ -18,6 +18,7 @@ import { createAuthenticatedMembershipContextResolver } from "../authentication/
 import { createIdentityAccessAuthorizer } from "../authorization/create-identity-access-authorizer";
 import { createMembershipAccessAuthorizer } from "../authorization/create-membership-access-authorizer";
 import type { ServerConfig } from "../config/server-config";
+import { registerTenantPeopleRoutes } from "./register-tenant-people-routes";
 
 export interface ServerRuntime {
     readonly app: FastifyInstance;
@@ -123,6 +124,17 @@ async function bootstrapServices(input: {
 
     membershipAccessAuthorizer.bind(accessRuntime.components.api);
     identityAccessAuthorizer.bind(accessRuntime.components.api);
+
+    registerTenantPeopleRoutes({
+        app: input.app,
+        identityApi: identityRuntime.api,
+        membershipApi: membershipRuntime.api,
+        accessApi: accessRuntime.components.api,
+        contextResolver: createAuthenticatedMembershipContextResolver({
+            engine: input.platformRuntime.engine.engine,
+            identityApi: identityRuntime.api,
+        }),
+    });
     return {
         membershipRuntime,
         accessRuntime,

@@ -17,7 +17,7 @@ import type {
     RuntimeContext,
 } from "@folksdo-engine/runtime";
 
-import type { IdentityProviderReadSecurity } from "../usecases";
+import type { IdentityProviderReadSecurity, IdentityTenantAdministrationSecurity } from "../usecases";
 
 import type {
     ChangePasswordRequest,
@@ -104,6 +104,13 @@ export interface IdentityApi {
         input: ChangePasswordRequest,
         context: RuntimeContext,
     ): Promise<ChangePasswordResult>;
+
+
+    getIdentityForTenantAdministration(
+        userId: string,
+        context: RuntimeContext,
+        security: IdentityTenantAdministrationSecurity,
+    ): Promise<ProviderIdentityResponse>;
 
     getIdentityForProvider(
         userId: string,

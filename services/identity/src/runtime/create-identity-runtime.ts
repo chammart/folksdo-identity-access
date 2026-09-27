@@ -54,6 +54,7 @@ import {
     createSignOutUseCase,
     createVerifyEmailUseCase,
     createGetIdentityForProviderUseCase,
+    createGetIdentityForTenantAdministrationUseCase,
     createListIdentitiesForProviderUseCase,
     type IdentityCollections,
     type IdentityIdGenerator,
@@ -251,6 +252,12 @@ export function createIdentityRuntime(
         });
 
 
+    const getIdentityForTenantAdministrationUseCase =
+        createGetIdentityForTenantAdministrationUseCase({
+            readStore: input.readStore,
+            authorization,
+        });
+
     const getIdentityForProviderUseCase =
         createGetIdentityForProviderUseCase({
             readStore: input.readStore,
@@ -434,6 +441,8 @@ export function createIdentityRuntime(
                 changePasswordUseCase,
 
                 getIdentityForProviderUseCase,
+
+                getIdentityForTenantAdministrationUseCase,
 
                 listIdentitiesForProviderUseCase,
             }),
