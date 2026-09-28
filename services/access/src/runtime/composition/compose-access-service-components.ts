@@ -246,6 +246,7 @@ export function composeAccessServiceComponents(
                 useCases,
                 readStore,
                 administrativeAuthorizer,
+                clock: input.clock,
             }),
         );
 
@@ -1357,6 +1358,9 @@ function createAccessApiOperations(
 
         readonly administrativeAuthorizer:
         AccessAdministrativeAuthorizer;
+
+        readonly clock:
+        AccessClock;
     },
 ): CreateAccessApiDependencies {
     const actorId = (
