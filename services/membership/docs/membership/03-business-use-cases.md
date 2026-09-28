@@ -44,7 +44,7 @@ Returns a Membership by identifier subject to authorization and visibility rules
 Returns Memberships belonging to a tenant.
 
 ### List Memberships for Provider
-Provides the provider/operator Membership listing surface defined by the service.
+Provides the provider/operator Membership administration directory. Optional filters may be combined across `tenantId`, `identityId`, Membership `status`, `membershipType`, creation/update lifecycle ranges, and bounded pagination. Provider authorization remains explicit; the directory is the controlled cross-tenant discovery surface rather than a tenant read.
 
 ### Get Invitation
 Returns an invitation by identifier subject to the invitation-view contract.

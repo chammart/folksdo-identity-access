@@ -38,9 +38,25 @@ Uses a password-reset token to replace the credential. On success it returns `{ 
 
 Authenticated credential maintenance. The target identity comes from trusted runtime context. The caller supplies the current password, new password and optional `revokeOtherSessions` flag. The flag defaults to true. Successful completion returns whether other sessions were revoked.
 
-## Provider/operator reads
+## Administration reads
 
-Identity also exposes two protected operational reads: list identities and get identity by user ID. These are not part of the nine customer-facing lifecycle use cases. They require platform/provider security context and Access authorization.
+Identity exposes protected administration reads in addition to the nine customer-facing lifecycle use cases.
+
+### Provider Identity Search
+
+The provider/operator identity directory supports controlled discovery by search, status, email-verification state and bounded pagination. Search matches the stable `userId` or email without exposing provider-specific identifiers. Provider authority is explicit and Access-authorized.
+
+### Provider Identity Detail
+
+Returns the safe Identity administration DTO for a specific user ID under `identity.identity.view`.
+
+### Tenant Administration Identity Read
+
+Provides the Identity-owned summary required by tenant People/Person Detail composition. Tenant authority is explicit and tenant-bound; this surface does not reuse provider authority.
+
+### Administration Security/Session Summary
+
+Provides a safe Identity-owned security/session summary for IAM 360 composition. It exposes summary facts only and does not expose credentials, password material, session tokens, provider session identifiers or other authentication secrets.
 
 ## Cross-capability behavior
 

@@ -20,7 +20,18 @@ This ordering prevents authentication, tenancy and authorization from becoming i
 
 Identity and Membership collaborate on invitation-led signup through events rather than shared ownership. Membership owns invitation lifecycle. Identity consumes Membership invitation lifecycle events to maintain a local known-invitation projection used during signup verification. Identity emits an invitation-redemption request after successful signup; Membership remains responsible for its own lifecycle response.
 
-Identity provider/operator reads are additionally protected through Access authorization. The current Identity permissions are `identity.identity.list` and `identity.identity.view`.
+Identity provider/operator reads are additionally protected through Access authorization. The current Identity permissions are `identity.identity.list` and `identity.identity.view`. Tenant-administration Identity reads are separately tenant-bound; tenant administration authority must not be interpreted as provider authority.
+
+## Administration composition
+
+R1 administration experiences preserve the same ownership model:
+
+- Identity supplies identity and safe security/session summary facts.
+- Membership supplies tenant relationship/lifecycle facts.
+- Access supplies roles, direct-access and effective-access summary facts.
+- The IAM host composes Tenant People, Provider IAM 360 and Tenant Person Detail without becoming a fourth business capability or authoritative read store.
+
+Provider IAM 360 may traverse relationships only under explicit provider authority. Tenant People and Tenant Person Detail are constrained to the authorized tenant and must deny cross-tenant reads.
 
 ## Boundary rule
 

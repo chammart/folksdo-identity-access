@@ -22,6 +22,7 @@
 - Assign Role
 - Remove Role Assignment
 - List Role Assignments
+- Role Usage Queries — the role-assignment directory supports roles-by-member, members-by-role and assignment counts without creating a second role-usage authority
 
 ## Authorization policies
 - Create Policy

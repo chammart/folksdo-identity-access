@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta
+    name="description"
+    content="Folksdo Operations™ Identity Service — NorthRiver Bank Scenario API Guide."
+  />
+  <title>Folksdo Operations™ Identity Service — NorthRiver Bank Scenario API Guide</title>
+
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --surface: #ffffff;
+      --surface-soft: #f9fafb;
+      --text: #172033;
+      --muted: #5e6b7f;
+      --border: #dde3ea;
+      --accent: #2557d6;
+      --accent-soft: #edf3ff;
+      --success: #16794c;
+      --success-soft: #eaf8f1;
+      --warning: #9a6700;
+      --warning-soft: #fff6df;
+      --code-bg: #111827;
+      --code-text: #e5edf8;
+      --shadow: 0 8px 30px rgba(22, 32, 51, 0.08);
+      --radius: 14px;
+      --max-width: 1180px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+    }
+
+    a {
+      color: var(--accent);
+    }
+
+    .page {
+      width: min(calc(100% - 32px), var(--max-width));
+      margin: 0 auto;
+      padding: 32px 0 64px;
+    }
+
+    .hero {
+      background:
+        radial-gradient(circle at top right, rgba(37, 87, 214, 0.13), transparent 34%),
+        linear-gradient(145deg, #ffffff, #f7f9fc);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 42px;
+      margin-bottom: 28px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border-radius: 999px;
+      padding: 7px 12px;
+      margin-bottom: 16px;
+    }
+
+    h1, h2, h3 {
+      line-height: 1.25;
+      margin-top: 0;
+    }
+
+    h1 {
+      font-size: clamp(2.1rem, 4vw, 3.3rem);
+      margin-bottom: 14px;
+      letter-spacing: -0.035em;
+    }
+
+    h2 {
+      margin-top: 42px;
+      padding-top: 8px;
+      font-size: clamp(1.5rem, 2.8vw, 2rem);
+      letter-spacing: -0.02em;
+    }
+
+    h3 {
+      margin-top: 26px;
+      margin-bottom: 10px;
+      font-size: 1.08rem;
+    }
+
+    p {
+      margin: 0 0 16px;
+      color: var(--muted);
+    }
+
+    .hero p {
+      font-size: 1.06rem;
+      max-width: 860px;
+    }
+
+    .status-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      color: var(--success);
+      background: var(--success-soft);
+      padding: 8px 12px;
+      border-radius: 999px;
+      margin-top: 8px;
+    }
+
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 30px;
+      margin-top: 22px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px;
+    }
+
+    .toc {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 9px;
+      margin-top: 20px;
+    }
+
+    .toc a {
+      text-decoration: none;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: var(--surface-soft);
+      color: var(--text);
+      font-weight: 650;
+      font-size: 0.91rem;
+    }
+
+    .toc a:hover {
+      border-color: #b8c6dd;
+      background: var(--accent-soft);
+    }
+
+    .pill {
+      display: inline-flex;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      background: var(--success-soft);
+      color: var(--success);
+      white-space: nowrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    pre {
+      margin: 14px 0 18px;
+      overflow-x: auto;
+      border-radius: 12px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 18px 20px;
+      font-size: 0.9rem;
+      line-height: 1.55;
+      border: 1px solid #263244;
+    }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    :not(pre) > code {
+      background: #eef2f7;
+      color: #22314a;
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-size: 0.92em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0;
+      overflow: hidden;
+      border-radius: 10px;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+      padding: 12px 14px;
+    }
+
+    th {
+      background: #f2f5f9;
+      color: #29354a;
+      font-size: 0.86rem;
+    }
+
+    td {
+      background: #fff;
+    }
+
+    ul {
+      padding-left: 22px;
+      color: var(--muted);
+    }
+
+    li + li {
+      margin-top: 7px;
+    }
+
+    .note {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-soft);
+      padding: 15px 18px;
+      border-radius: 0 10px 10px 0;
+      color: #344a75;
+      margin: 18px 0;
+    }
+
+    .warning {
+      border-left: 4px solid var(--warning);
+      background: var(--warning-soft);
+      padding: 15px 18px;
+      border-radius: 0 10px 10px 0;
+      color: #6e5200;
+      margin: 18px 0;
+    }
+
+    .flow {
+      font-size: 0.95rem;
+    }
+
+    .footer {
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: 0.87rem;
+      text-align: center;
+    }
+
+    @media (max-width: 820px) {
+      .page {
+        width: min(calc(100% - 22px), var(--max-width));
+        padding-top: 16px;
+      }
+
+      .hero,
+      .section,
+      .card {
+        padding: 22px;
+      }
+
+      .grid,
+      .toc {
+        grid-template-columns: 1fr;
+      }
+
+      table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+    }
+
+    @media print {
+      body {
+        background: white;
+      }
+
+      .page {
+        width: 100%;
+        max-width: none;
+        padding: 0;
+      }
+
+      .hero,
+      .section,
+      .card {
+        box-shadow: none;
+        break-inside: avoid;
+      }
+
+      .toc {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <header class="hero">
+      <div class="eyebrow">Folksdo Operations™ · Identity Operations™</div>
+
+      <h1>NorthRiver Bank Scenario API Guide</h1>
+
+      <p>
+        This guide demonstrates how the Folksdo Operations™ Identity Service behaves
+        in a realistic enterprise SaaS onboarding and credential-lifecycle scenario
+        using <strong>NorthRiver Bank™</strong>, a large North American financial
+        institution.
+      </p>
+
+      <p>
+        The scenario follows Sarah Carter from invitation signup through email
+        verification, activation, authentication, current-session and current-user
+        resolution, password recovery, authenticated password change, and sign-out.
+      </p>
+
+      <div class="status-line">● Identity Operations™ — 9 / 9 public use cases complete</div>
+
+      <nav class="toc" aria-label="Guide sections">
+        <a href="#scenario">Scenario Overview</a>
+        <a href="#flow">Business Flow</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#status">Current Status</a>
+        <a href="#signup">Invitation SignUp™</a>
+        <a href="#verify">Verify Email™</a>
+        <a href="#signin">Sign In™</a>
+        <a href="#session">Current Session™</a>
+        <a href="#user">Current User™</a>
+        <a href="#request-reset">Request Password Reset™</a>
+        <a href="#reset-password">Reset Password™</a>
+        <a href="#change-password">Change Password™</a>
+        <a href="#signout">Sign Out™</a>
+        <a href="#timeline">Event Timeline</a>
+        <a href="#errors">Error Scenarios</a>
+        <a href="#testing">Testing Strategy</a>
+      </nav>
+    </header>
+
+    <section class="section" id="scenario">
+      <h2>Scenario Overview</h2>
+
+      <p>
+        NorthRiver Bank has signed an enterprise SaaS contract with Folksdo.
+        A Folksdo operator provisions the tenant and sends an invitation to the
+        bank's first administrator.
+      </p>
+
+      <pre><code>Sarah Carter
+VP Transformation Office
+NorthRiver Bank
+sarah.carter@northriverbank.com</code></pre>
+
+      <p>Sarah's Identity lifecycle includes:</p>
+
+      <ul>
+        <li>receiving a tenant invitation</li>
+        <li>signing up using the invitation token</li>
+        <li>verifying email ownership</li>
+        <li>activating her global Identity</li>
+        <li>signing in and creating an authenticated session</li>
+        <li>retrieving her current session</li>
+        <li>retrieving her current global Identity profile</li>
+        <li>requesting password recovery when required</li>
+        <li>resetting a password through the recovery flow</li>
+        <li>changing a password while already authenticated</li>
+        <li>signing out and ending the active session</li>
+      </ul>
+
+      <div class="note">
+        Identity owns Sarah's global Identity, authentication, sessions, and
+        credential lifecycle. Membership later establishes which tenant context
+        she operates in, and Access determines what she is authorized to do there.
+      </div>
+    </section>
+
+    <section class="section" id="flow">
+      <h2>Business Flow</h2>
+
+      <pre class="flow"><code>Tenant Provisioned
+      ↓
+Invitation Created
+      ↓
+Invitation SignUp™
+      ↓
+Email Verification Requested
+      ↓
+Verify Email™
+      ↓
+Global Identity Activated
+      ↓
+Sign In™
+      ↓
+Active Session Created
+      ↓
+Current Session™
+      ↓
+Current User™
+      ↓
+Authenticated Identity Ready
+      ↓
+ ┌─────────────────────────────┬──────────────────────────────┐
+ │ Password Recovery Path      │ Authenticated Change Path    │
+ │                             │                              │
+ │ Request Password Reset™     │ Change Password™             │
+ │          ↓                  │          ↓                   │
+ │ Reset Password™             │ Credential Updated           │
+ │          ↓                  │                              │
+ │ Credential Updated          │                              │
+ └─────────────────────────────┴──────────────────────────────┘
+      ↓
+Sign Out™
+      ↓
+Active Session Ended</code></pre>
+    </section>
+
+    <section class="section" id="architecture">
+      <h2>Architecture Flow</h2>
+
+      <pre><code>HTTP Route
+    ↓
+IdentityApi
+    ↓
+Use Case
+    ↓
+Identity Read Store / BetterAuth Adapter
+    ↓
+Folksdo Engine™ state.commit(...)
+    ↓
+HTTP Response</code></pre>
+
+      <div class="note">
+        BetterAuth performs provider-specific authentication and credential
+        mechanics behind the Identity boundary. Identity remains responsible for
+        business semantics, lifecycle state, replayable events, and outbox messages.
+      </div>
+    </section>
+
+    <section class="section" id="status">
+      <h2>Current Service Status</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Use Case</th>
+            <th>Method</th>
+            <th>Endpoint</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Invitation SignUp™</td>
+            <td>POST</td>
+            <td><code>/api/v1/identity/invitation-sign-up</code></td>
+            <td><span class="pill">Complete</span></td>
+          </tr>
+          <tr>
+            <td>Verify Email™</td>
+            <td>POST</td>
+            <td><code>/api/v1/identity/verify-email</code></td>
+            <td><span class="pill">Complete</span></td>
+          </tr>
+          <tr>
+            <td>Sign In™</td>
+            <td>POST</td>
+            <td><code>/api/v1/identity/sign-in</code></td>
+            <td><span class="pill">Complete</span></td>
+          </tr>
+          <tr>
+            <td>Sign Out™</td>
+            <td>POST</td>
+            <td><code>/api/v1/identity/sign-out</code></td>
+            <td><span class="pill">Complete</span></td>
+          </tr>
+          <tr>
+            <td>Current Session™</td>
+            <td>GET</td>
+            <td><code>/api/v1/identity/session</code></td>
+            <td><span class="pill">Complete</span></td>
+          </tr>
+          <tr>
+            <td>Current User™</td>
+            <td>GET</td>
+            <td><code>/api/v1/identity/me</code></td>
+            <td><span class="pill">Complete</span></td>
+          </tr>
+          <tr>
+            <td>Request Password Reset™</td>
+            <td>POST</td>
+            <td><code>/api/v1/identity/request-password-reset</code></td>
+            <td><span class="pill">Complete</span></td>
+          </tr>
+          <tr>
+            <td>Reset Password™</td>
+            <td>POST</td>
+            <td><code>/api/v1/identity/reset-password</code></td>
+            <td><span class="pill">Complete</span></td>
+          </tr>
+          <tr>
+            <td>Change Password™</td>
+            <td>POST</td>
+            <td><code>/api/v1/identity/change-password</code></td>
+            <td><span class="pill">Complete</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section" id="signup">
+      <div class="badge">Use Case 1</div>
+      <h2>Invitation SignUp™</h2>
+
+      <p>
+        Sarah clicks the invitation link received from Folksdo and creates her
+        global Identity.
+      </p>
+
+      <h3>Request</h3>
+
+      <pre><code>POST /api/v1/identity/invitation-sign-up
+Content-Type: application/json
+
+{
+  "invitationToken": "invite_nr_bank_001",
+  "firstName": "Sarah",
+  "lastName": "Carter",
+  "password": "StrongPassword123!"
+}</code></pre>
+
+      <h3>Business Rules</h3>
+
+      <ul>
+        <li>validate invitation token</li>
+        <li>resolve invitation lifecycle state</li>
+        <li>create or reuse the global Identity</li>
+        <li>create a pending email verification</li>
+        <li>coordinate verification-token mechanics</li>
+        <li>persist replayable business events</li>
+        <li>persist matching outbox messages</li>
+      </ul>
+
+      <h3>State Changes</h3>
+
+      <pre><code>IdentityUser created or reused
+Identity profile created
+EmailVerification created → pending
+Invitation redemption requested</code></pre>
+
+      <h3>Business Events</h3>
+
+      <pre><code>identity.user_created
+identity.user_profile_created
+identity.email_verification_requested
+identity.invitation_redemption_requested</code></pre>
+
+      <h3>Result</h3>
+
+      <pre><code>Sarah's global Identity exists
+Email verification is required
+Invitation redemption has been requested</code></pre>
+    </section>
+
+    <section class="section" id="verify">
+      <div class="badge">Use Case 2</div>
+      <h2>Verify Email™</h2>
+
+      <p>
+        Sarah opens the verification email and proves ownership of her email
+        address.
+      </p>
+
+      <h3>Request</h3>
+
+      <pre><code>POST /api/v1/identity/verify-email
+Content-Type: application/json
+
+{
+  "token": "verify_nr_bank_001"
+}</code></pre>
+
+      <h3>Business Rules</h3>
+
+      <ul>
+        <li>validate the verification request</li>
+        <li>resolve the pending verification</li>
+        <li>ask BetterAuth to verify the token</li>
+        <li>mark the verification as verified</li>
+        <li>activate Sarah's global Identity</li>
+        <li>persist replayable events and matching outbox messages</li>
+      </ul>
+
+      <h3>State Changes</h3>
+
+      <pre><code>EmailVerification → verified
+IdentityUser → active</code></pre>
+
+      <h3>Business Events</h3>
+
+      <pre><code>identity.user_email_verified
+identity.user_activated</code></pre>
+
+      <h3>Example Event Payload</h3>
+
+      <pre><code>{
+  "userId": "usr_sarah_001",
+  "email": "sarah.carter@northriverbank.com",
+  "verifiedAt": "2026-07-02T12:00:00.000Z"
+}</code></pre>
+
+      <h3>Result</h3>
+
+      <pre><code>Email ownership verified
+Sarah Carter global Identity active</code></pre>
+    </section>
+
+    <section class="section" id="signin">
+      <div class="badge">Use Case 3</div>
+      <h2>Sign In™</h2>
+
+      <p>
+        Sarah signs in after her email is verified and her global Identity is
+        active.
+      </p>
+
+      <h3>Request</h3>
+
+      <pre><code>POST /api/v1/identity/sign-in
+Content-Type: application/json
+
+{
+  "email": "sarah.carter@northriverbank.com",
+  "password": "StrongPassword123!"
+}</code></pre>
+
+      <h3>Business Rules</h3>
+
+      <ul>
+        <li>validate request shape</li>
+        <li>delegate credential authentication to BetterAuth</li>
+        <li>reject invalid credentials without leaking account existence</li>
+        <li>confirm the Identity is active and verified</li>
+        <li>create Identity-owned active session lifecycle state</li>
+        <li>persist the replayable session event and outbox message</li>
+      </ul>
+
+      <h3>Business Events</h3>
+
+      <pre><code>identity.session_created</code></pre>
+
+      <h3>Example Response</h3>
+
+      <pre><code>{
+  "userId": "usr_sarah_001",
+  "email": "sarah.carter@northriverbank.com",
+  "sessionId": "ses_sarah_001",
+  "expiresAt": "2026-07-02T13:05:00.000Z"
+}</code></pre>
+
+      <h3>Result</h3>
+
+      <pre><code>Authenticated session created</code></pre>
+    </section>
+
+    <section class="section" id="session">
+      <div class="badge">Use Case 5</div>
+      <h2>Current Session™</h2>
+
+      <p>
+        Sarah's client resolves the currently active Identity session through a
+        safe session reference such as <code>x-identity-session-id</code>.
+      </p>
+
+      <h3>Request</h3>
+
+      <pre><code>GET /api/v1/identity/session
+x-identity-session-id: ses_sarah_001</code></pre>
+
+      <h3>Business Rules</h3>
+
+      <ul>
+        <li>resolve the current active session</li>
+        <li>return only Identity-owned safe session state</li>
+        <li>exclude provider tokens, cookies, secrets, and internal BetterAuth details</li>
+        <li>do not resolve Membership context</li>
+        <li>do not perform Access authorization</li>
+      </ul>
+
+      <h3>Example Response</h3>
+
+      <pre><code>{
+  "sessionId": "ses_sarah_001",
+  "userId": "usr_sarah_001",
+  "status": "active",
+  "createdAt": "2026-07-02T12:05:00.000Z",
+  "expiresAt": "2026-07-02T13:05:00.000Z"
+}</code></pre>
+
+      <h3>Result</h3>
+
+      <pre><code>Current authenticated Identity session returned safely</code></pre>
+    </section>
+
+    <section class="section" id="user">
+      <div class="badge">Use Case 6</div>
+      <h2>Current User™</h2>
+
+      <p>
+        With an active session, Sarah's client retrieves her current global
+        Identity and Identity-owned profile.
+      </p>
+
+      <h3>Request</h3>
+
+      <pre><code>GET /api/v1/identity/me
+x-identity-session-id: ses_sarah_001</code></pre>
+
+      <h3>Business Rules</h3>
+
+      <ul>
+        <li>resolve the active authenticated session</li>
+        <li>resolve the associated global Identity</li>
+        <li>return Identity-owned user and profile fields</li>
+        <li>exclude memberships, roles, permissions, tenant access, credentials, and provider secrets</li>
+      </ul>
+
+      <h3>Example Response</h3>
+
+      <pre><code>{
+  "userId": "usr_sarah_001",
+  "email": "sarah.carter@northriverbank.com",
+  "firstName": "Sarah",
+  "lastName": "Carter",
+  "status": "active",
+  "emailVerified": true
+}</code></pre>
+
+      <h3>Result</h3>
+
+      <pre><code>Current global Identity returned
+Membership and Access boundaries preserved</code></pre>
+    </section>
+
+    <section class="section" id="request-reset">
+      <div class="badge">Use Case 7</div>
+      <h2>Request Password Reset™</h2>
+
+      <p>
+        Later, Sarah cannot remember her password and starts the account-recovery
+        flow.
+      </p>
+
+      <h3>Request</h3>
+
+      <pre><code>POST /api/v1/identity/request-password-reset
+Content-Type: application/json
+
+{
+  "email": "sarah.carter@northriverbank.com"
+}</code></pre>
+
+      <h3>Business Rules</h3>
+
+      <ul>
+        <li>validate the reset request</li>
+        <li>resolve the known Identity without exposing account enumeration details</li>
+        <li>delegate reset-token mechanics to BetterAuth</li>
+        <li>record the password-reset-requested lifecycle event</li>
+        <li>persist the matching outbox message</li>
+      </ul>
+
+      <h3>Business Events</h3>
+
+      <pre><code>identity.password_reset_requested</code></pre>
+
+      <h3>Result</h3>
+
+      <pre><code>Password reset requested
+Recovery flow can continue with a valid reset token</code></pre>
+    </section>
+
+    <section class="section" id="reset-password">
+      <div class="badge">Use Case 8</div>
+      <h2>Reset Password™</h2>
+
+      <p>
+        Sarah follows the password recovery link and replaces the forgotten
+        credential.
+      </p>
+
+      <h3>Request</h3>
+
+      <pre><code>POST /api/v1/identity/reset-password
+Content-Type: application/json
+
+{
+  "token": "reset_nr_bank_001",
+  "newPassword": "RecoveredPassword456!"
+}</code></pre>
+
+      <h3>Business Rules</h3>
+
+      <ul>
+        <li>validate the reset request and reset token</li>
+        <li>delegate password-update mechanics to BetterAuth</li>
+        <li>record the credential lifecycle update</li>
+        <li>persist the replayable credential-updated event</li>
+        <li>persist the matching outbox message</li>
+      </ul>
+
+      <h3>Business Events</h3>
+
+      <pre><code>identity.credential_updated</code></pre>
+
+      <h3>Result</h3>
+
+      <pre><code>Sarah's credential updated through recovery flow</code></pre>
+    </section>
+
+    <section class="section" id="change-password">
+      <div class="badge">Use Case 9</div>
+      <h2>Change Password™</h2>
+
+      <p>
+        While authenticated, Sarah proactively changes her password without
+        entering the password-recovery flow.
+      </p>
+
+      <h3>Request</h3>
+
+      <pre><code>POST /api/v1/identity/change-password
+Content-Type: application/json
+x-identity-session-id: ses_sarah_001
+
+{
+  "currentPassword": "RecoveredPassword456!",
+  "newPassword": "NorthRiverSecure789!"
+}</code></pre>
+
+      <h3>Business Rules</h3>
+
+      <ul>
+        <li>require an active authenticated session</li>
+        <li>resolve the authenticated global Identity</li>
+        <li>validate the current credential through BetterAuth</li>
+        <li>apply the replacement credential through BetterAuth</li>
+        <li>record the credential lifecycle update</li>
+        <li>persist <code>identity.credential_updated</code> and matching outbox state</li>
+        <li>preserve the active session according to Identity session policy</li>
+      </ul>
+
+      <h3>Business Events</h3>
+
+      <pre><code>identity.credential_updated</code></pre>
+
+      <h3>Example Response</h3>
+
+      <pre><code>{
+  "userId": "usr_sarah_001",
+  "status": "updated",
+  "changedAt": "2026-07-02T12:40:00.000Z"
+}</code></pre>
+
+      <div class="note">
+        Change Password™ and Reset Password™ are intentionally separate.
+        Change Password™ requires an authenticated session and the current
+        credential. Reset Password™ is a recovery flow driven by a reset token.
+      </div>
+    </section>
+
+    <section class="section" id="signout">
+      <div class="badge">Use Case 4</div>
+      <h2>Sign Out™</h2>
+
+      <p>
+        Sarah signs out after finishing her work session.
+      </p>
+
+      <h3>Request</h3>
+
+      <pre><code>POST /api/v1/identity/sign-out
+Content-Type: application/json
+
+{
+  "sessionId": "ses_sarah_001"
+}</code></pre>
+
+      <h3>Business Rules</h3>
+
+      <ul>
+        <li>validate the session reference</li>
+        <li>resolve the active Identity session</li>
+        <li>ask BetterAuth to revoke or end the provider session</li>
+        <li>mark the Identity session as signed_out</li>
+        <li>persist the replayable session-ended event</li>
+        <li>persist the matching outbox message atomically</li>
+      </ul>
+
+      <h3>State Changes</h3>
+
+      <pre><code>IdentitySession
+active → signed_out</code></pre>
+
+      <h3>Business Events</h3>
+
+      <pre><code>identity.session_ended</code></pre>
+
+      <h3>Result</h3>
+
+      <pre><code>Sarah Carter session ended
+Session is no longer active</code></pre>
+    </section>
+
+    <section class="section">
+      <h2>Atomic Commit Guarantee</h2>
+
+      <p>
+        Identity Service does not treat durable Identity mutations as partial
+        business writes. State, replayable events, and outbox messages cross the
+        Folksdo Engine™ commit boundary together.
+      </p>
+
+      <pre><code>State Changes
+      +
+Replayable Events
+      +
+Outbox Messages
+      =
+One Engine state.commit(...)</code></pre>
+
+      <p>Examples:</p>
+
+      <pre><code>Verify Email™
+
+EmailVerification update
++
+Identity activation
++
+identity.user_email_verified
++
+identity.user_activated
++
+matching outbox messages
+=
+one commit
+
+
+Sign In™
+
+Identity session state
++
+identity.session_created
++
+matching outbox message
+=
+one commit
+
+
+Credential Lifecycle™
+
+Identity credential lifecycle state
++
+identity.password_reset_requested / identity.credential_updated
++
+matching outbox message
+=
+one commit where Identity state is mutated</code></pre>
+    </section>
+
+    <section class="section" id="timeline">
+      <h2>NorthRiver Bank Identity Timeline</h2>
+
+      <pre><code>T0   NorthRiver Bank tenant provisioned
+T1   Invitation issued to Sarah Carter
+T2   Invitation SignUp™ completed
+T3   Email verification requested
+T4   Sarah verifies email
+T5   Global Identity activated
+T6   Sarah signs in
+T7   Active Identity session created
+T8   Current Session™ resolves authenticated session
+T9   Current User™ resolves Sarah's global Identity
+
+Optional recovery path:
+T10  Request Password Reset™
+T11  Reset Password™
+T12  identity.credential_updated persisted
+
+Optional authenticated credential path:
+T13  Sarah signs in with current credential
+T14  Change Password™
+T15  identity.credential_updated persisted
+T16  Active session remains valid according to Identity policy
+
+T17  Sarah signs out
+T18  identity.session_ended persisted
+T19  Session no longer active</code></pre>
+    </section>
+
+    <section class="section" id="errors">
+      <h2>Error Scenarios</h2>
+
+      <div class="grid">
+        <div class="card">
+          <h3>Invalid Invitation Token</h3>
+          <pre><code>{
+  "error": "Invitation token is invalid"
+}</code></pre>
+        </div>
+
+        <div class="card">
+          <h3>Expired Invitation</h3>
+          <pre><code>{
+  "error": "Invitation expired"
+}</code></pre>
+        </div>
+
+        <div class="card">
+          <h3>Invalid Verification Token</h3>
+          <pre><code>{
+  "error": "Invalid verification token"
+}</code></pre>
+        </div>
+
+        <div class="card">
+          <h3>Invalid Credentials</h3>
+          <pre><code>{
+  "error": "Invalid credentials"
+}</code></pre>
+        </div>
+
+        <div class="card">
+          <h3>Missing Session</h3>
+          <pre><code>{
+  "error": "Authentication session required"
+}</code></pre>
+        </div>
+
+        <div class="card">
+          <h3>Invalid Current Password</h3>
+          <pre><code>{
+  "error": "Current password is invalid"
+}</code></pre>
+        </div>
+
+        <div class="card">
+          <h3>Invalid Reset Token</h3>
+          <pre><code>{
+  "error": "Password reset token is invalid"
+}</code></pre>
+        </div>
+
+        <div class="card">
+          <h3>Credential Policy Rejection</h3>
+          <pre><code>{
+  "error": "Password does not satisfy credential policy"
+}</code></pre>
+        </div>
+      </div>
+
+      <div class="warning">
+        Example error bodies in this scenario are illustrative business-facing
+        examples. Production clients should rely on the stable HTTP and semantic
+        error contract implemented by Identity rather than provider-specific
+        BetterAuth errors.
+      </div>
+    </section>
+
+    <section class="section" id="testing">
+      <h2>Testing Strategy</h2>
+
+      <pre><code>Unit / Business Rules
+        ↓
+Integration Tests
+        ↓
+E2E Tests
+        ↓
+Bruno / Public API Validation
+        ↓
+Deployment Certification</code></pre>
+
+      <h3>Identity Coverage</h3>
+
+      <ul>
+        <li>invitation signup happy path and existing-Identity reuse</li>
+        <li>email verification and Identity activation</li>
+        <li>sign-in happy path and invalid credential rejection</li>
+        <li>sign-out and session termination</li>
+        <li>current-session resolution and transport-safe response</li>
+        <li>current-user resolution and boundary-safe profile response</li>
+        <li>password-reset request lifecycle</li>
+        <li>password-reset completion and credential lifecycle event</li>
+        <li>authenticated change-password lifecycle</li>
+        <li>missing-session rejection for protected Identity operations</li>
+        <li>event persistence</li>
+        <li>outbox persistence</li>
+        <li>provider error translation at the Identity boundary</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>Final Business Outcome</h2>
+
+      <p>
+        At the end of the NorthRiver Bank Identity flow, Folksdo has established
+        Sarah Carter as a durable global Identity with a complete authentication
+        and credential lifecycle.
+      </p>
+
+      <pre><code>NorthRiver Bank tenant provisioned
+Sarah Carter global Identity active
+Email ownership verified
+Authenticated session lifecycle supported
+Current session can be resolved safely
+Current global Identity can be resolved safely
+Password recovery lifecycle supported
+Authenticated password change supported
+Credential lifecycle produces durable Identity events
+Session lifecycle can be terminated through Sign Out™
+
+Identity boundary complete
+Ready for Membership context
+Ready for Access authorization</code></pre>
+
+      <div class="note">
+        Identity answers <strong>Who?</strong><br />
+        Membership answers <strong>Where?</strong><br />
+        Access answers <strong>What?</strong>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Production Status</h2>
+
+      <pre><code>Folksdo Operations™ Identity Service
+
+Invitation SignUp™        PRODUCTION-GRADE COMPLETE
+Verify Email™             PRODUCTION-GRADE COMPLETE
+Sign In™                  PRODUCTION-GRADE COMPLETE
+Sign Out™                 PRODUCTION-GRADE COMPLETE
+Current Session™          PRODUCTION-GRADE COMPLETE
+Current User™             PRODUCTION-GRADE COMPLETE
+Request Password Reset™   PRODUCTION-GRADE COMPLETE
+Reset Password™           PRODUCTION-GRADE COMPLETE
+Change Password™          PRODUCTION-GRADE COMPLETE
+
+Completed Public Use Cases: 9 / 9
+Status: PRODUCTION-GRADE COMPLETE</code></pre>
+    </section>
+
+    <footer class="footer">
+      Folksdo Operations™ · Identity Operations™ · NorthRiver Bank Scenario API Guide
+    </footer>
+  </main>
+</body>
+</html>

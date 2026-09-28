@@ -24,9 +24,11 @@ Identity has real integration coverage for:
 - Reset Password
 - Change Password
 - Provider identity get
-- Provider identity list
+- Provider identity list/search/filter/pagination
+- Tenant administration Identity read
+- Administration security/session summary
 
-IAM-level E2E certification additionally validates the Identity → Membership → Access chain through the real Fastify application/runtime.
+IAM-level E2E certification additionally validates the Identity → Membership → Access chain through the real Fastify application/runtime. R1 release certification proves Provider Identity Search, Tenant People, Provider IAM 360 and tenant Person Detail using the real cross-capability security boundary.
 
 ## Local certification
 

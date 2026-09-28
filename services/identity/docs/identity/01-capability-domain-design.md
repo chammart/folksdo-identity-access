@@ -27,6 +27,8 @@ Identity persistence uses dedicated collections for users, credentials, sessions
 - Session-bound operations require an active authentication session.
 - Password changes derive the target identity from authenticated runtime context; callers do not supply a user ID or session ID to select another identity.
 - Provider/operator identity reads require Access authorization.
+- Tenant administration Identity reads are explicitly tenant-bound and must not infer provider authority.
+- Administration security/session reads expose safe summary facts only; credentials, password material and session secrets remain private Identity state.
 
 ## Provider boundary
 

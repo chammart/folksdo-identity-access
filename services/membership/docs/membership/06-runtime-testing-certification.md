@@ -10,11 +10,11 @@ The host remains thin. Membership business logic stays inside the Membership ser
 
 ### Integration
 
-Production-grade integration tests exercise Membership use cases against real infrastructure/runtime composition rather than HTTP mocks. Current coverage includes creation, invitation lifecycle, Membership lifecycle, context resolution/switching, provider and tenant reads, activation reactions, and external lifecycle reactions.
+Production-grade integration tests exercise Membership use cases against real infrastructure/runtime composition rather than HTTP mocks. Current coverage includes creation, invitation lifecycle, Membership lifecycle, context resolution/switching, provider and tenant reads, provider administration search/filter/lifecycle-range/pagination behavior, activation reactions, and external lifecycle reactions.
 
 ### E2E
 
-IAM E2E tests verify Membership through the assembled Fastify application and the Identity → Membership → Access security chain.
+IAM E2E tests verify Membership through the assembled Fastify application and the Identity → Membership → Access security chain. R1 release certification additionally proves Provider Membership Search and its participation in Provider IAM 360 and tenant People/Person Detail composition.
 
 ### Reaction Tests
 

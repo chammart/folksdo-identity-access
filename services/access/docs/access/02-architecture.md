@@ -26,3 +26,8 @@ The IAM server bootstraps Identity and Membership, then Access, binds Identity/M
 
 ## Dependency rule
 Access may consume upstream facts but does not mutate Identity, Membership, Tenant or Subscription-owned state. Cross-boundary synchronization is event-driven.
+
+
+## R1 administration composition
+
+The IAM host may compose Access read results with Identity and Membership for Tenant People and IAM 360. The host calls Access APIs/read contracts; it does not read Access MongoDB collections directly and does not become an authorization source of truth.

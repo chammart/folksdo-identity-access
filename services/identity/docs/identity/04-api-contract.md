@@ -21,7 +21,16 @@
 | GET | `/api/v1/identities` | 200 | `identity.identity.list` |
 | GET | `/api/v1/identities/:userId` | 200 | `identity.identity.view` |
 
-The list surface supports status filtering plus offset/limit pagination. Provider DTOs expose stable Identity fields, not BetterAuth identifiers.
+The list surface supports the following optional administration query values:
+
+- `search` — matches stable `userId` or email.
+- `status` — canonical Identity status filter.
+- `emailVerified` — verification-state filter.
+- `offset` / `limit` — bounded pagination.
+
+The provider list response is paged as `items`, `total`, `offset`, and `limit`. Provider DTOs expose stable Identity fields, not BetterAuth identifiers.
+
+Tenant administration Identity reads and the administration security/session summary are Identity-owned composition contracts used by the IAM host. They remain Access-authorized and are not alternate persistence or provider DTOs.
 
 ## Core request/response contracts
 

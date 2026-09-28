@@ -25,6 +25,20 @@ Public Membership routes are under `/api/v1/membership`.
 | GET | `/api/v1/membership/:membershipId` | Get Membership |
 | GET | `/api/v1/membership/tenant/:tenantId` | List tenant Memberships |
 
+## Provider Membership administration query
+
+`GET /api/v1/membership/memberships` supports optional, combinable provider filters:
+
+- `tenantId`
+- `identityId`
+- `status`
+- `membershipType`
+- `createdFrom` / `createdTo`
+- `updatedFrom` / `updatedTo`
+- `offset` / `limit`
+
+The response is paged as `items`, `total`, `offset`, and `limit`. Provider authority is explicit and does not derive from tenant administration authority. Lifecycle ranges are validated at the HTTP boundary.
+
 ## HTTP Semantics
 
 Creation endpoints use `201` where the current route contract creates a new resource. Successful reads and lifecycle operations use the route-defined success response. Authentication, authorization, validation, conflict/not-found, and invariant failures are translated through the Membership HTTP error boundary.
@@ -37,7 +51,7 @@ The API must not accept caller-supplied authorization truth as authoritative run
 
 ## Validation
 
-Request bodies, route parameters, and query values are validated at the HTTP boundary before reaching business rules. Invitation status filters use the canonical invitation statuses: `pending`, `redeemed`, `revoked`, `expired`.
+Request bodies, route parameters, and query values are validated at the HTTP boundary before reaching business rules. Invitation status filters use the canonical invitation statuses: `pending`, `redeemed`, `revoked`, `expired`. Zod validation failures, including invalid provider lifecycle ranges, map to `400 validation_error`.
 
 ## Stability Rule
 

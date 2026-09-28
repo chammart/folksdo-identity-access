@@ -31,6 +31,21 @@ All administrative endpoints require authenticated context and the canonical Acc
 | GET | `/restrictions` | 200 | List restrictions |
 | POST | `/authorize` | 200 | Evaluate authorization |
 
+## Role assignment administration query
+
+`GET /role-assignments` is the Access-owned role-usage read surface. Its administration query supports the existing assignment selectors and controls, including:
+
+- `roleId` — members/assignments using a role.
+- `membershipId` — roles assigned to a Membership.
+- `identityId` — roles for an Identity, resolved through Access-known Membership facts rather than treating Identity ID as Role Assignment state.
+- assignment `status` and expiry-related filters defined by the executable DTO.
+- `sortBy` / `sortDirection`.
+- `offset` / `limit`.
+
+The paged result includes `total`, allowing role assignment/usage counts before consequential role lifecycle changes. Tenant execution remains forcibly tenant-bound. Provider/platform execution requires its explicit authority and may query across tenants only where the route contract permits it.
+
+HTTP pagination query values are parsed from canonical non-negative integer strings before numeric bounds are applied.
+
 ## HTTP contract principles
 - Validation failures map to the repository validation error contract.
 - Missing authentication is rejected before protected business execution.

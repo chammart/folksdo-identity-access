@@ -32,7 +32,7 @@ Known-invitation projection
 
 ### Use cases
 
-`src/usecases` owns orchestration for the nine customer-facing Identity behaviors plus protected provider identity reads.
+`src/usecases` owns orchestration for the nine customer-facing Identity behaviors plus protected provider and tenant-administration Identity reads.
 
 ### Domain/state and business rules
 
@@ -65,6 +65,8 @@ The IAM server bootstraps Identity before Membership and Access so authenticatio
 - Identity reactions are broker-neutral.
 - Runtime context is the trusted source for authenticated actor identity.
 - Provider/operator reads are a distinct protected surface rather than self-service identity endpoints.
+- Tenant administration reads use tenant-bound Access authorization and do not inherit provider authority.
+- IAM 360 consumes an Identity-owned safe security/session summary instead of reading Identity persistence directly.
 
 ## Source-of-truth implementation
 

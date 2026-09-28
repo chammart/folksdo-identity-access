@@ -9,10 +9,10 @@ Access readiness is part of IAM readiness. The IAM server is not ready when the 
 - **Unit/domain tests** verify business rules and authorization behavior.
 - **Integration tests** execute against real infrastructure and service composition.
 - **Reaction tests** verify replayable upstream-event choreography.
-- **E2E tests** exercise the real Fastify HTTP boundary, authentication/context and Access authorization.
+- **E2E tests** exercise the real Fastify HTTP boundary, authentication/context and Access authorization, including role-usage filters/counts and tenant/provider administration boundaries.
 - **Repository certification** runs the hardened IAM verification contract before release.
 
-Production-grade provider tests must use the real runtime contracts; HTTP mocks are not the certification baseline.
+Production-grade provider tests must use the real runtime contracts; HTTP mocks are not the certification baseline. R1 release certification proves Role Usage Queries together with Tenant People, Provider IAM 360 and Tenant Person Detail.
 
 ## Local certification
 `pnpm certification:local` prepares deterministic IAM fixtures, starts the real local IAM runtime, verifies readiness and projects the Bruno local environment. The self-contained `01 - IAM` acceptance suite includes Access administrator authority and ordinary-member denial scenarios.

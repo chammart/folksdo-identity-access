@@ -44,6 +44,22 @@ Readiness is exposed at `GET /health/ready`. The server is ready only when Platf
 - Cross-capability asynchronous behavior uses replayable events and Processing reactions.
 - Provider integrations remain behind capability-owned adapters.
 - Public DTOs must not expose provider-specific concepts.
+- Administration projections compose capability-owned reads; they are not authoritative state stores.
+- Provider authority and tenant authority are distinct and explicit. Tenant administration never implies provider authority.
+- Tenant administration reads fail closed outside the authorized tenant.
+
+## R1 Administration Read Foundation
+
+The locally certified R1 administration layer adds read composition without changing capability ownership:
+
+- Provider Identity Search — Identity-owned.
+- Provider Membership Search — Membership-owned.
+- Role Usage Queries — Access-owned.
+- Tenant People — host composition of Identity + Membership + Access, strictly tenant-authorized.
+- Provider IAM 360 — host composition across authorized provider-visible Membership relationships.
+- Tenant Person Detail — the same safe composition constrained to one authorized tenant.
+
+The host does not persist an IAM 360 or People aggregate. It composes current capability-owned read contracts. R1 effective-access information is a summary of existing Access facts; detailed access explanation/provenance is outside the R1 contract.
 
 ## Source-of-truth implementation
 

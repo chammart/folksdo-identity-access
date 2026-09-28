@@ -25,3 +25,8 @@ Identity answers **Who?** Membership answers **Where?** Access answers **What ma
 
 ## Does not own
 Access does not own authentication credentials or sessions, Membership lifecycle, tenant business state, subscription commercial truth, or provider/customer UI state.
+
+
+## Administration Read Contract
+
+Access owns role-usage and access-summary facts used by R1 administration experiences. Roles-by-member, members-by-role and assignment counts are projections of Access-owned Role Assignment state; they do not create a separate administration aggregate. Tenant reads remain tenant-bound and provider authority is explicit.
