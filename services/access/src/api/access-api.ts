@@ -164,6 +164,15 @@ export interface CreateAccessApiDependencies {
     readonly getEffectiveAccess:
     AccessApiOperation<"getEffectiveAccess">;
 
+    readonly explainAccess:
+    AccessApiOperation<"explainAccess">;
+
+    readonly getAccessSummary:
+    AccessApiOperation<"getAccessSummary">;
+
+    readonly getRoleAccessImpact:
+    AccessApiOperation<"getRoleAccessImpact">;
+
     readonly authorize:
     AccessApiOperation<"authorize">;
 }
@@ -416,6 +425,15 @@ export function createAccessApi(
 
         getEffectiveAccess: (membershipId, context) =>
             dependencies.getEffectiveAccess(membershipId, context),
+
+        explainAccess: (membershipId, request, context) =>
+            dependencies.explainAccess(membershipId, request, context),
+
+        getAccessSummary: (membershipId, context) =>
+            dependencies.getAccessSummary(membershipId, context),
+
+        getRoleAccessImpact: (roleId, context) =>
+            dependencies.getRoleAccessImpact(roleId, context),
 
         authorize: (
             request,

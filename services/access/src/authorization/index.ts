@@ -28,3 +28,5 @@ export * from "./subscription-administrative-permissions";
 export * from "./tenant-administrative-permissions";
 export * from "./usage-administrative-permissions";
 export * from "./provider-control-plane-administrative-permissions";
+
+export * from "./privileged-access-classification";

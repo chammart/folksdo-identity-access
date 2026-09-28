@@ -23,6 +23,9 @@ import type {
     ApiArchiveRoleRequest,
     ApiAssignRoleRequest,
     EffectiveAccessDto,
+    AccessExplanationDto,
+    AccessSummaryDto,
+    AccessImpactDto,
     AuthorizationDecisionDto,
     AuthorizationPolicyDto,
     AuthorizeRequest,
@@ -386,6 +389,22 @@ export interface AccessAuthorizationApi {
         membershipId: string,
         context: AccessApiRequestContext,
     ): Promise<EffectiveAccessDto>;
+
+    explainAccess(
+        membershipId: string,
+        request: AuthorizeRequest,
+        context: AccessApiRequestContext,
+    ): Promise<AccessExplanationDto>;
+
+    getAccessSummary(
+        membershipId: string,
+        context: AccessApiRequestContext,
+    ): Promise<AccessSummaryDto>;
+
+    getRoleAccessImpact(
+        roleId: string,
+        context: AccessApiRequestContext,
+    ): Promise<AccessImpactDto>;
 
     authorize(
         request: AuthorizeRequest,

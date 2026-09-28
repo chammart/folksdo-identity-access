@@ -114,6 +114,8 @@ import type {
 
 import {
     evaluateAuthorizationPolicy,
+    isPrivilegedPermission,
+    isPrivilegedRole,
 } from "../../authorization";
 
 import type {
@@ -2958,6 +2960,76 @@ function createAccessApiOperations(
             };
         },
 
+        explainAccess: async (membershipId: string, request: Record<string, unknown>, context: AccessApiRequestContext) => {
+            const tenantId = requireTenantAdministrativeContext(context).tenantId;
+            await assertMembershipInTenant(membershipId, tenantId);
+            const membership = await input.readStore.findKnownMembership(membershipId);
+            if (membership === null) {
+                throw new AccessAdministrativeAuthorizationDeniedError("authorization_scope_invalid");
+            }
+            await authorizeAdministrativeOperation("explainAccess", context, "membership", membershipId);
+
+            const action = typeof request.action === "string" ? request.action.trim() : "";
+            const [service = "", permissionResource = "", permissionAction = ""] = action.split(".");
+            const resource = typeof request.resource === "object" && request.resource !== null && !Array.isArray(request.resource)
+                ? request.resource as Readonly<Record<string, unknown>> : {};
+            const resourceType = typeof resource.type === "string" ? resource.type.trim() : "";
+            const resourceId = typeof resource.id === "string" ? resource.id.trim() : undefined;
+
+            const result = await input.useCases.authorization.authorizeAction.execute({
+                identityId: membership.identityId, membershipId, tenantId,
+                permission: { service, resource: permissionResource, action: permissionAction },
+                resource: { resourceType, ...(resourceId === undefined ? {} : { resourceId }) },
+            });
+            return { ...result, identityId: membership.identityId };
+        },
+
+        getAccessSummary: async (membershipId: string, context: AccessApiRequestContext) => {
+            const tenantId = requireTenantAdministrativeContext(context).tenantId;
+            await assertMembershipInTenant(membershipId, tenantId);
+            await authorizeAdministrativeOperation("getAccessSummary", context, "membership", membershipId);
+            const result = await input.useCases.authorization.effectiveAccess.execute({ membershipId, tenantId });
+            const denied = new Set(result.effectivePermissions.filter(x => x.effect === "deny").map(x => x.permission.permissionId));
+            const effectivePermissionCount = new Set(result.effectivePermissions.filter(x => x.effect === "grant" && !denied.has(x.permission.permissionId)).map(x => x.permission.permissionId)).size;
+            const roleAssignments = new Set(result.effectivePermissions.filter(x => x.source === "role_assignment").map(x => x.sourceId));
+            const directAssignments = new Set(result.effectivePermissions.filter(x => x.source === "permission_assignment").map(x => x.sourceId));
+            const expiring = new Set(result.effectivePermissions.filter(x => x.expiresAt !== undefined).map(x => x.sourceId));
+            const privilegedPermissionIds = new Set(result.effectivePermissions
+                .filter(x => x.effect === "grant" && !denied.has(x.permission.permissionId) && isPrivilegedPermission(x.permission))
+                .map(x => x.permission.permissionId));
+            return {
+                identityId: result.identityId, membershipId, tenantId, membershipIsValid: result.membershipIsValid,
+                effectivePermissionCount, roleAssignmentCount: roleAssignments.size, directPermissionAssignmentCount: directAssignments.size,
+                restrictionCount: result.restrictions.length, expiringAccessCount: expiring.size,
+                privilegedPermissionCount: privilegedPermissionIds.size, hasPrivilegedAccess: privilegedPermissionIds.size > 0,
+                evaluatedAt: result.evaluatedAt,
+            };
+        },
+
+        getRoleAccessImpact: async (roleId: string, context: AccessApiRequestContext) => {
+            const tenantId = requireTenantAdministrativeContext(context).tenantId;
+            await authorizeAdministrativeOperation("getRoleAccessImpact", context, "role", roleId);
+            const role = await input.readStore.findRoleById(roleId);
+            if (role === null || (role.roleType === "tenant" && role.tenantId !== tenantId) || role.roleType === "platform") {
+                throw new AccessAdministrativeAuthorizationDeniedError("authorization_scope_invalid");
+            }
+            const [assignments, permissions] = await Promise.all([
+                input.readStore.listRoleAssignments(),
+                input.readStore.findPermissionsByIds(role.permissionIds),
+            ]);
+            const affectedAssignments = assignments.filter(x => x.tenantId === tenantId && x.roleId === roleId && x.status === "active");
+            const privilegedPermissionIds = permissions.filter(isPrivilegedPermission).map(x => x.permissionId).sort();
+            const affectedMembershipIds = [...new Set(affectedAssignments.map(x => x.membershipId))].sort();
+            const affectedAssignmentIds = affectedAssignments.map(x => x.assignmentId).sort();
+            const affectedPermissionIds = [...role.permissionIds].sort();
+            return {
+                tenantId, roleId, privilegedRole: isPrivilegedRole(role, permissions),
+                affectedMembershipIds, affectedAssignmentIds, affectedPermissionIds, privilegedPermissionIds,
+                affectedMemberCount: affectedMembershipIds.length, affectedAssignmentCount: affectedAssignmentIds.length,
+                affectedPermissionCount: affectedPermissionIds.length, evaluatedAt: input.clock.now(),
+            };
+        },
+
         authorize: async (
             request: Record<string, unknown>,
             context: AccessApiRequestContext,
@@ -3506,6 +3578,13 @@ function createAccessApiValidation():
             value =>
                 parse(
                     listRestrictionsQuerySchema,
+                    value,
+                ),
+
+        explainAccess:
+            value =>
+                parse(
+                    authorizeRequestSchema,
                     value,
                 ),
 

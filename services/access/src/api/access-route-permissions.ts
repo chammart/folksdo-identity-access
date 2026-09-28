@@ -133,6 +133,15 @@ export const ACCESS_ROUTE_PERMISSIONS = {
     getEffectiveAccess:
         ACCESS_ADMINISTRATIVE_PERMISSIONS.effectiveAccessView,
 
+    explainAccess:
+        ACCESS_ADMINISTRATIVE_PERMISSIONS.accessExplanationView,
+
+    getAccessSummary:
+        ACCESS_ADMINISTRATIVE_PERMISSIONS.accessSummaryView,
+
+    getRoleAccessImpact:
+        ACCESS_ADMINISTRATIVE_PERMISSIONS.accessImpactView,
+
     // -------------------------------------------------------------------------
     // ACCESS RESTRICTIONS
     // -------------------------------------------------------------------------

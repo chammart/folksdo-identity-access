@@ -227,6 +227,24 @@ export const ACCESS_ADMINISTRATIVE_PERMISSIONS = {
             "view",
         ),
 
+    accessExplanationView:
+        defineAccessAdministrativePermission(
+            "explanation",
+            "view",
+        ),
+
+    accessSummaryView:
+        defineAccessAdministrativePermission(
+            "summary",
+            "view",
+        ),
+
+    accessImpactView:
+        defineAccessAdministrativePermission(
+            "impact",
+            "view",
+        ),
+
     // -------------------------------------------------------------------------
     // ACCESS RESTRICTIONS
     // -------------------------------------------------------------------------

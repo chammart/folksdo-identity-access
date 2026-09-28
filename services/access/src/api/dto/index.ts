@@ -22,6 +22,8 @@ export * from "./authorization-policy-dto";
 export * from "./access-restriction-dto";
 export * from "./authorization-decision-dto";
 export * from "./effective-access-dto";
+export * from "./access-explanation-dto";
+export * from "./access-summary-dto";
 
 // Command request DTOs
 export * from "./create-permission-request";
@@ -47,3 +49,4 @@ export * from "./list-role-assignments-query";
 export * from "./list-permission-assignments-query";
 export * from "./list-policies-query";
 export * from "./list-restrictions-query";
+export * from "./access-impact-dto";

@@ -44,6 +44,9 @@ import {
     getPermissionRoute,
     getRoleRoute,
     getEffectiveAccessRoute,
+    explainAccessRoute,
+    getAccessSummaryRoute,
+    getRoleAccessImpactRoute,
     grantPermissionRoute,
     listPermissionAssignmentsRoute,
     listPermissionsRoute,
@@ -328,6 +331,15 @@ export interface AccessApiValidation {
     ? (
         value: unknown,
     ) => TQuery
+    : never;
+
+    readonly explainAccess:
+    AccessApi["explainAccess"] extends (
+        membershipId: string,
+        request: infer TRequest,
+        context: AccessApiRequestContext,
+    ) => unknown
+    ? (value: unknown) => TRequest
     : never;
 
     readonly authorize:
@@ -1038,6 +1050,35 @@ export async function registerAccessRoutes(
             executeAccessRoute(reply, getEffectiveAccessRoute.successStatusCode, async () => {
                 const context = await contextResolver.resolve(request);
                 return api.getEffectiveAccess(request.params.membershipId, context);
+            }),
+    );
+
+
+    server.post(
+        `${ACCESS_API_PREFIX}${explainAccessRoute.path}`,
+        async (request: FastifyRequest<{ Params: AccessMembershipParameters; Body: unknown }>, reply) =>
+            executeAccessRoute(reply, explainAccessRoute.successStatusCode, async () => {
+                const command = validation.explainAccess(request.body);
+                const context = await contextResolver.resolve(request);
+                return api.explainAccess(request.params.membershipId, command, context);
+            }),
+    );
+
+    server.get(
+        `${ACCESS_API_PREFIX}${getAccessSummaryRoute.path}`,
+        async (request: FastifyRequest<{ Params: AccessMembershipParameters }>, reply) =>
+            executeAccessRoute(reply, getAccessSummaryRoute.successStatusCode, async () => {
+                const context = await contextResolver.resolve(request);
+                return api.getAccessSummary(request.params.membershipId, context);
+            }),
+    );
+
+    server.get(
+        `${ACCESS_API_PREFIX}${getRoleAccessImpactRoute.path}`,
+        async (request: FastifyRequest<{ Params: AccessRoleParameters }>, reply) =>
+            executeAccessRoute(reply, getRoleAccessImpactRoute.successStatusCode, async () => {
+                const context = await contextResolver.resolve(request);
+                return api.getRoleAccessImpact(request.params.roleId, context);
             }),
     );
 

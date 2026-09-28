@@ -704,6 +704,39 @@ export const getEffectiveAccessRoute = {
     hasParameters: true,
 } as const satisfies AccessRouteDefinition<"getEffectiveAccess">;
 
+export const explainAccessRoute = {
+    routeId: "access.explanation.view",
+    method: "POST",
+    path: "/access-explanations/:membershipId",
+    operation: "explainAccess",
+    successStatusCode: 200,
+    hasBody: true,
+    hasQuery: false,
+    hasParameters: true,
+} as const satisfies AccessRouteDefinition<"explainAccess">;
+
+export const getAccessSummaryRoute = {
+    routeId: "access.summary.view",
+    method: "GET",
+    path: "/access-summary/:membershipId",
+    operation: "getAccessSummary",
+    successStatusCode: 200,
+    hasBody: false,
+    hasQuery: false,
+    hasParameters: true,
+} as const satisfies AccessRouteDefinition<"getAccessSummary">;
+
+export const getRoleAccessImpactRoute = {
+    routeId: "access.impact.view",
+    method: "GET",
+    path: "/access-impact/roles/:roleId",
+    operation: "getRoleAccessImpact",
+    successStatusCode: 200,
+    hasBody: false,
+    hasQuery: false,
+    hasParameters: true,
+} as const satisfies AccessRouteDefinition<"getRoleAccessImpact">;
+
 // -----------------------------------------------------------------------------
 // AUTHORIZATION ROUTES
 // -----------------------------------------------------------------------------
@@ -780,6 +813,9 @@ export const accessRestrictionRoutes = [
 
 export const accessAuthorizationRoutes = [
     getEffectiveAccessRoute,
+    explainAccessRoute,
+    getAccessSummaryRoute,
+    getRoleAccessImpactRoute,
     authorizeRoute,
 ] as const;
 

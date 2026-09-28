@@ -49,7 +49,7 @@ describe("Access™ R2 effective access administration", () => {
             const [service, resource, action] = permissionId.split(".");
             await db.collection("access_permissions").insertOne({ permissionId, service, resource, action, displayName: permissionId, description: permissionId, classification: "business", createdAt: effectiveFrom });
         }
-        await db.collection("access_roles").insertOne({ roleId, roleKey: `cert-${randomUUID()}`, roleName: "R2 Effective Access", description: "R2", roleType: "tenant", tenantId: c.tenantId, lifecycleStatus: "active", permissionIds: [rolePermissionId], createdBy: c.identity.userId, createdAt: effectiveFrom, updatedAt: effectiveFrom, activatedAt: effectiveFrom });
+        await db.collection("access_roles").insertOne({ roleId, roleKey: `cert-${randomUUID()}`, roleName: "R2 Effective Access", description: "R2", roleType: "tenant", tenantId: c.tenantId, lifecycleStatus: "active", permissionIds: [rolePermissionId, "access.role.archive"], createdBy: c.identity.userId, createdAt: effectiveFrom, updatedAt: effectiveFrom, activatedAt: effectiveFrom });
         await db.collection("access_role_assignments").insertOne({ assignmentId: roleAssignmentId, identityId: targetIdentityId, membershipId: targetMembershipId, tenantId: c.tenantId, roleId, status: "active", assignedBy: c.identity.userId, effectiveFrom, expiresAt, suspensionSources: [], createdAt: effectiveFrom, updatedAt: effectiveFrom });
         await db.collection("access_permission_assignments").insertOne({ assignmentId: directAssignmentId, identityId: targetIdentityId, membershipId: targetMembershipId, tenantId: c.tenantId, permissionId: directPermissionId, assignmentType: "grant", scope: { scopeType: "tenant" }, status: "active", assignedBy: c.identity.userId, effectiveFrom, expiresAt, suspensionSources: [], createdAt: effectiveFrom, updatedAt: effectiveFrom });
         const restrictionId = `restriction_${randomUUID()}`;
@@ -61,6 +61,38 @@ describe("Access™ R2 effective access administration", () => {
             expect.objectContaining({ permission: expect.objectContaining({ permissionId: rolePermissionId }), source: "role_assignment", sourceId: roleAssignmentId, effectiveFrom, expiresAt }),
             expect.objectContaining({ permission: expect.objectContaining({ permissionId: directPermissionId }), source: "permission_assignment", sourceId: directAssignmentId, effectiveFrom, expiresAt }),
         ]), restrictions: expect.arrayContaining([expect.objectContaining({ restrictionId, effectiveFrom, expiresAt })]), evaluatedAt: expect.any(String) });
+
+        const [service, resource, action] = directPermissionId.split(".") as [string, string, string];
+        const explanation = await accessHttp(c.sessionId, "POST", `/access-explanations/${encodeURIComponent(targetMembershipId)}`, {
+            action: `${service}.${resource}.${action}`,
+            resource: { type: resource },
+        });
+        expect(explanation.statusCode).toBe(200);
+        expect(explanation.json()).toMatchObject({
+            identityId: targetIdentityId, membershipId: targetMembershipId, tenantId: c.tenantId,
+            decision: "deny", reasonCode: "access_restricted",
+            evidence: expect.arrayContaining([expect.objectContaining({ source: "access_restriction", sourceId: restrictionId })]),
+        });
+
+        const summary = await accessHttp(c.sessionId, "GET", `/access-summary/${encodeURIComponent(targetMembershipId)}`);
+        expect(summary.statusCode).toBe(200);
+        expect(summary.json()).toMatchObject({
+            identityId: targetIdentityId, membershipId: targetMembershipId, tenantId: c.tenantId, membershipIsValid: true,
+            effectivePermissionCount: 3, roleAssignmentCount: 1, directPermissionAssignmentCount: 1,
+            restrictionCount: 1, expiringAccessCount: 2, privilegedPermissionCount: 1, hasPrivilegedAccess: true, evaluatedAt: expect.any(String),
+        });
+
+
+        const impact = await accessHttp(c.sessionId, "GET", `/access-impact/roles/${encodeURIComponent(roleId)}`);
+        expect(impact.statusCode).toBe(200);
+        expect(impact.json()).toMatchObject({
+            tenantId: c.tenantId, roleId, privilegedRole: true,
+            affectedMembershipIds: [targetMembershipId], affectedAssignmentIds: [roleAssignmentId],
+            affectedPermissionIds: expect.arrayContaining([rolePermissionId, "access.role.archive"]),
+            privilegedPermissionIds: ["access.role.archive"],
+            affectedMemberCount: 1, affectedAssignmentCount: 1, affectedPermissionCount: 2,
+            evaluatedAt: expect.any(String),
+        });
     });
 
     it("denies a foreign-tenant membership", async () => {
