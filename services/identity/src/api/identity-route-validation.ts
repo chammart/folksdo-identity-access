@@ -275,3 +275,6 @@ export function parseProviderIdentityParams(input: unknown) {
 export function parseProviderIdentityListRequest(input: unknown) {
     return providerIdentityListQuerySchema.parse(input);
 }
+
+const providerIdentitySessionParamsSchema = z.object({ userId: z.string().trim().min(1), sessionId: z.string().trim().min(1) }).strict();
+export function parseProviderIdentitySessionParams(input: unknown) { return providerIdentitySessionParamsSchema.parse(input); }

@@ -67,3 +67,7 @@ Invitation signup depends on Membership-owned invitation lifecycle facts but doe
 - `services/identity/src/usecases/`
 - `services/identity/src/api/identity-dtos.ts`
 - `services/identity/tests/integration/`
+
+## R3 — Identity Security Administration™
+
+R3 adds Provider Admin security operations for session administration, provider-initiated recovery, Identity suspension/reactivation, Security Summary, and Identity-owned authentication/security history. These operations remain inside Identity ownership and use explicit Provider authority.

@@ -21,7 +21,7 @@ export type IdentityAuthorizationScope =
 export interface IdentityAccessAuthorizationRequest {
     readonly permission: IdentityPermission;
     readonly scope: IdentityAuthorizationScope;
-    readonly resource: { readonly type: "identity"; readonly id?: string; };
+    readonly resource: { readonly type: "identity" | "session" | "recovery"; readonly id?: string; };
 }
 
 export interface IdentityAccessAuthorizationDecision {

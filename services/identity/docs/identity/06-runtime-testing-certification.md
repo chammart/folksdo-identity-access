@@ -73,3 +73,7 @@ A `503 not_ready` response is correct when required runtime dependencies are not
 ## R2 participation
 
 Identity has no new R2 authority or mutation contract. R2 release certification uses a real Identity lifecycle and waits for the existing Identity → Access known-identity reaction before evaluating target-member access. This proves Access intelligence does not bypass Identity availability semantics.
+
+## R3 certification
+
+R3 is locally certified GREEN using the real IAM HTTP host, Engine, MongoDB, NATS/outbox processing, and Access authorization. The release gate covers the complete provider security-incident journey and verifies that secret material is not exposed by administration reads.

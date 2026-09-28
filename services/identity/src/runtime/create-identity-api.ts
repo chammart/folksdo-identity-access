@@ -23,6 +23,10 @@ import type {
     ListIdentitiesForProviderUseCase,
     GetIdentityForTenantAdministrationUseCase,
     GetIdentitySecuritySummaryUseCase,
+    GetIdentitySecurityHistoryUseCase,
+    ProviderSessionAdministrationUseCase,
+    ProviderRecoveryInitiationUseCase,
+    ProviderIdentityLifecycleUseCase,
 } from "../usecases";
 
 // -----------------------------------------------------------------------------
@@ -68,6 +72,18 @@ export interface CreateIdentityApiInput {
 
     readonly getIdentitySecuritySummaryUseCase:
     GetIdentitySecuritySummaryUseCase;
+
+    readonly getIdentitySecurityHistoryUseCase:
+    GetIdentitySecurityHistoryUseCase;
+
+    readonly providerSessionAdministrationUseCase:
+    ProviderSessionAdministrationUseCase;
+
+    readonly providerRecoveryInitiationUseCase:
+    ProviderRecoveryInitiationUseCase;
+
+    readonly providerIdentityLifecycleUseCase:
+    ProviderIdentityLifecycleUseCase;
 }
 
 // -----------------------------------------------------------------------------
@@ -201,6 +217,16 @@ export function createIdentityApi(
         async getIdentitySecuritySummary(userId, context, security) {
             return await input.getIdentitySecuritySummaryUseCase.execute(userId, context, security);
         },
+
+        async getIdentitySecurityHistory(userId, context, security) { return await input.getIdentitySecurityHistoryUseCase.execute(userId, context, security); },
+
+        async listSessionsForProvider(userId, context, security) { return await input.providerSessionAdministrationUseCase.list(userId, context, security); },
+        async getSessionForProvider(userId, sessionId, context, security) { return await input.providerSessionAdministrationUseCase.get(userId, sessionId, context, security); },
+        async revokeSessionForProvider(userId, sessionId, context, security) { return await input.providerSessionAdministrationUseCase.revoke(userId, sessionId, context, security); },
+        async revokeAllSessionsForProvider(userId, context, security) { return await input.providerSessionAdministrationUseCase.revokeAll(userId, context, security); },
+        async initiateRecoveryForProvider(userId, context, security) { return await input.providerRecoveryInitiationUseCase.execute(userId, context, security); },
+        async suspendIdentityForProvider(userId, context, security) { return await input.providerIdentityLifecycleUseCase.suspend(userId, context, security); },
+        async reactivateIdentityForProvider(userId, context, security) { return await input.providerIdentityLifecycleUseCase.reactivate(userId, context, security); },
 
         async getIdentityForProvider(
             userId,

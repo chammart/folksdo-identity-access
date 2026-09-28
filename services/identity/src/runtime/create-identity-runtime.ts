@@ -31,6 +31,8 @@ import type {
 
 import type {
     IdentityAdministrationSessionReadStore,
+    IdentitySecuritySummaryReadStore,
+    IdentitySecurityHistoryReadStore,
     IdentityCredentialReadStore,
     IdentityPasswordResetSessionReadStore,
     IdentityReadStore,
@@ -57,7 +59,11 @@ import {
     createGetIdentityForProviderUseCase,
     createGetIdentityForTenantAdministrationUseCase,
     createGetIdentitySecuritySummaryUseCase,
+    createGetIdentitySecurityHistoryUseCase,
     createListIdentitiesForProviderUseCase,
+    createProviderSessionAdministrationUseCase,
+    createProviderRecoveryInitiationUseCase,
+    createProviderIdentityLifecycleUseCase,
     type IdentityCollections,
     type IdentityIdGenerator,
     type IdentityOutboxSubjects,
@@ -92,7 +98,9 @@ export interface CreateIdentityRuntimeInput {
     readonly readStore:
     IdentityReadStore
     & IdentityPasswordResetSessionReadStore
-    & IdentityAdministrationSessionReadStore;
+    & IdentityAdministrationSessionReadStore
+    & IdentitySecuritySummaryReadStore
+    & IdentitySecurityHistoryReadStore;
 
     readonly credentialReadStore:
     IdentityCredentialReadStore;
@@ -267,6 +275,9 @@ export function createIdentityRuntime(
             authorization,
         });
 
+    const getIdentitySecurityHistoryUseCase =
+        createGetIdentitySecurityHistoryUseCase({ readStore: input.readStore, authorization });
+
     const getIdentityForProviderUseCase =
         createGetIdentityForProviderUseCase({
             readStore: input.readStore,
@@ -301,6 +312,38 @@ export function createIdentityRuntime(
                     input.outboxSubjects.passwordResetRequested,
             },
         });
+
+    const providerSessionAdministrationUseCase = createProviderSessionAdministrationUseCase({
+        engine: input.engine,
+        clock: input.clock,
+        ids: input.ids,
+        readStore: input.readStore,
+        authorization,
+        betterAuth: input.betterAuth,
+        collections: { sessions: input.collections.sessions },
+        outboxSubjects: { sessionEnded: input.outboxSubjects.sessionEnded },
+    });
+
+    const providerRecoveryInitiationUseCase = createProviderRecoveryInitiationUseCase({
+        readStore: input.readStore,
+        authorization,
+        requestPasswordReset: requestPasswordResetUseCase,
+    });
+
+    const providerIdentityLifecycleUseCase = createProviderIdentityLifecycleUseCase({
+        engine: input.engine,
+        clock: input.clock,
+        ids: input.ids,
+        readStore: input.readStore,
+        authorization,
+        betterAuth: input.betterAuth,
+        collections: { users: input.collections.users, sessions: input.collections.sessions },
+        outboxSubjects: {
+            userDisabled: input.outboxSubjects.userDisabled,
+            userRestored: input.outboxSubjects.userRestored,
+            sessionEnded: input.outboxSubjects.sessionEnded,
+        },
+    });
 
     const resetPasswordUseCase =
         createResetPasswordUseCase({
@@ -454,6 +497,14 @@ export function createIdentityRuntime(
                 getIdentityForTenantAdministrationUseCase,
 
                 getIdentitySecuritySummaryUseCase,
+
+                getIdentitySecurityHistoryUseCase,
+
+                providerSessionAdministrationUseCase,
+
+                providerRecoveryInitiationUseCase,
+
+                providerIdentityLifecycleUseCase,
 
                 listIdentitiesForProviderUseCase,
             }),

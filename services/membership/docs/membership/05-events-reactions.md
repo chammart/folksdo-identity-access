@@ -60,3 +60,7 @@ These are external facts. Membership translates them into Membership-owned state
 ## Choreography Boundary
 
 Membership publishes facts about tenant participation. Identity publishes facts about global identity. Access consumes the resulting authenticated Membership context for authorization. No service gains ownership of another service's canonical state through event consumption.
+
+## R3 Identity lifecycle integration
+
+Identity suspension/reactivation remains Identity-owned. Membership participates only through the established lifecycle reaction contract. Reactivation restores eligibility and must not manufacture Membership state that did not already exist.

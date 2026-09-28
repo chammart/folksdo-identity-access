@@ -50,3 +50,9 @@ The current Identity runtime does **not** register reactions for tenant suspensi
 - `services/identity/src/reactions/`
 - `services/identity/src/runtime/register-identity-reactions.ts`
 - `services/identity/src/runtime/bootstrap-identity-service.ts`
+
+## R3 lifecycle and security reactions
+
+R3 preserves the hardened Identity lifecycle/event contracts already consumed by downstream IAM capabilities. Suspension/reactivation are Identity-owned operations; downstream Membership/Access behavior is reaction-driven. Reactivation restores eligibility only and does not synthesize downstream state.
+
+Authentication investigation reads canonical Identity event history; it does not introduce a second audit event model or projection as authoritative state.

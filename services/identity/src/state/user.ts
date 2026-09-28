@@ -19,4 +19,6 @@ export interface IdentityUserState {
     readonly createdAt: string;
     readonly updatedAt: string;
     readonly activatedAt?: string;
+    readonly suspendedAt?: string;
+    readonly reactivatedAt?: string;
 }

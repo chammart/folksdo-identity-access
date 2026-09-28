@@ -54,6 +54,7 @@ import {
     parseVerifyEmailRequest,
     parseProviderIdentityListRequest,
     parseProviderIdentityParams,
+    parseProviderIdentitySessionParams,
 } from "./identity-route-validation";
 
 // -----------------------------------------------------------------------------
@@ -128,6 +129,8 @@ export async function registerIdentityRoutes(
     await registerProviderIdentityGetRoute(
         input,
     );
+
+    await registerProviderIdentitySecurityAdministrationRoutes(input);
 }
 
 // -----------------------------------------------------------------------------
@@ -999,5 +1002,48 @@ async function registerProviderIdentityGetRoute(input: RegisterIdentityRoutesInp
             const translated = translateIdentityHttpError(error);
             return await reply.status(translated.statusCode).send(translated.body);
         }
+    });
+}
+
+
+// -----------------------------------------------------------------------------
+// PROVIDER IDENTITY SECURITY ADMINISTRATION ROUTES
+// -----------------------------------------------------------------------------
+async function registerProviderIdentitySecurityAdministrationRoutes(input: RegisterIdentityRoutesInput): Promise<void> {
+    input.app.get("/api/v1/identities/:userId/sessions", async (request, reply) => {
+        try { const params = parseProviderIdentityParams(request.params); const resolved = await input.providerReadSecurityResolver.resolvePlatform({ request, reply }); return await input.identityApi.listSessionsForProvider(params.userId, resolved.context, resolved.security); }
+        catch (error) { request.log.error({ route: "identity.provider-sessions-list", error: serializeError(error) }, "Provider Identity sessions list failed."); const translated = translateIdentityHttpError(error); return await reply.status(translated.statusCode).send(translated.body); }
+    });
+    input.app.get("/api/v1/identities/:userId/sessions/:sessionId", async (request, reply) => {
+        try { const params = parseProviderIdentitySessionParams(request.params); const resolved = await input.providerReadSecurityResolver.resolvePlatform({ request, reply }); return await input.identityApi.getSessionForProvider(params.userId, params.sessionId, resolved.context, resolved.security); }
+        catch (error) { request.log.error({ route: "identity.provider-session-get", error: serializeError(error) }, "Provider Identity session get failed."); const translated = translateIdentityHttpError(error); return await reply.status(translated.statusCode).send(translated.body); }
+    });
+    input.app.post("/api/v1/identities/:userId/sessions/:sessionId/revoke", async (request, reply) => {
+        try { const params = parseProviderIdentitySessionParams(request.params); const resolved = await input.providerReadSecurityResolver.resolvePlatform({ request, reply }); return await input.identityApi.revokeSessionForProvider(params.userId, params.sessionId, resolved.context, resolved.security); }
+        catch (error) { request.log.error({ route: "identity.provider-session-revoke", error: serializeError(error) }, "Provider Identity session revoke failed."); const translated = translateIdentityHttpError(error); return await reply.status(translated.statusCode).send(translated.body); }
+    });
+    input.app.post("/api/v1/identities/:userId/sessions/revoke-all", async (request, reply) => {
+        try { const params = parseProviderIdentityParams(request.params); const resolved = await input.providerReadSecurityResolver.resolvePlatform({ request, reply }); return await input.identityApi.revokeAllSessionsForProvider(params.userId, resolved.context, resolved.security); }
+        catch (error) { request.log.error({ route: "identity.provider-sessions-revoke-all", error: serializeError(error) }, "Provider Identity sessions revoke-all failed."); const translated = translateIdentityHttpError(error); return await reply.status(translated.statusCode).send(translated.body); }
+    });
+    input.app.post("/api/v1/identities/:userId/recovery", async (request, reply) => {
+        try { const params = parseProviderIdentityParams(request.params); const resolved = await input.providerReadSecurityResolver.resolvePlatform({ request, reply }); return await input.identityApi.initiateRecoveryForProvider(params.userId, resolved.context, resolved.security); }
+        catch (error) { request.log.error({ route: "identity.provider-recovery-initiate", error: serializeError(error) }, "Provider Identity recovery initiation failed."); const translated = translateIdentityHttpError(error); return await reply.status(translated.statusCode).send(translated.body); }
+    });
+    input.app.post("/api/v1/identities/:userId/suspend", async (request, reply) => {
+        try { const params = parseProviderIdentityParams(request.params); const resolved = await input.providerReadSecurityResolver.resolvePlatform({ request, reply }); return await input.identityApi.suspendIdentityForProvider(params.userId, resolved.context, resolved.security); }
+        catch (error) { request.log.error({ route: "identity.provider-suspend", error: serializeError(error) }, "Provider Identity suspension failed."); const translated = translateIdentityHttpError(error); return await reply.status(translated.statusCode).send(translated.body); }
+    });
+    input.app.post("/api/v1/identities/:userId/reactivate", async (request, reply) => {
+        try { const params = parseProviderIdentityParams(request.params); const resolved = await input.providerReadSecurityResolver.resolvePlatform({ request, reply }); return await input.identityApi.reactivateIdentityForProvider(params.userId, resolved.context, resolved.security); }
+        catch (error) { request.log.error({ route: "identity.provider-reactivate", error: serializeError(error) }, "Provider Identity reactivation failed."); const translated = translateIdentityHttpError(error); return await reply.status(translated.statusCode).send(translated.body); }
+    });
+    input.app.get("/api/v1/identities/:userId/security-history", async (request, reply) => {
+        try { const params = parseProviderIdentityParams(request.params); const resolved = await input.providerReadSecurityResolver.resolvePlatform({ request, reply }); return await input.identityApi.getIdentitySecurityHistory(params.userId, resolved.context, resolved.security); }
+        catch (error) { request.log.error({ route: "identity.provider-security-history", error: serializeError(error) }, "Provider Identity security history failed."); const translated = translateIdentityHttpError(error); return await reply.status(translated.statusCode).send(translated.body); }
+    });
+    input.app.get("/api/v1/identities/:userId/security-summary", async (request, reply) => {
+        try { const params = parseProviderIdentityParams(request.params); const resolved = await input.providerReadSecurityResolver.resolvePlatform({ request, reply }); return await input.identityApi.getIdentitySecuritySummary(params.userId, resolved.context, resolved.security); }
+        catch (error) { request.log.error({ route: "identity.provider-security-summary", error: serializeError(error) }, "Provider Identity security summary failed."); const translated = translateIdentityHttpError(error); return await reply.status(translated.statusCode).send(translated.body); }
     });
 }

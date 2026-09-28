@@ -17,7 +17,7 @@ import type {
     RuntimeContext,
 } from "@folksdo-engine/runtime";
 
-import type { IdentityProviderReadSecurity, IdentityTenantAdministrationSecurity, IdentitySecuritySummary, IdentitySecuritySummarySecurity } from "../usecases";
+import type { IdentityProviderReadSecurity, IdentityTenantAdministrationSecurity, IdentitySecuritySummary, IdentitySecuritySummarySecurity, IdentitySecurityHistory, IdentitySecurityHistorySecurity, ProviderIdentitySecurityAdministration, ProviderRecoverySecurity, ProviderIdentityLifecycleSecurity, ProviderIdentityLifecycleResult } from "../usecases";
 
 import type {
     ChangePasswordRequest,
@@ -40,6 +40,11 @@ import type {
     VerifyEmailResult,
     ProviderIdentityResponse,
     ProviderIdentityListResponse,
+    ProviderIdentitySessionListResponse,
+    ProviderIdentitySessionResponse,
+    ProviderSessionRevocationResult,
+    ProviderAllSessionsRevocationResult,
+    ProviderRecoveryInitiationResult,
 } from "./identity-dtos";
 
 export interface IdentityApi {
@@ -117,6 +122,15 @@ export interface IdentityApi {
         context: RuntimeContext,
         security: IdentitySecuritySummarySecurity,
     ): Promise<IdentitySecuritySummary>;
+
+    getIdentitySecurityHistory(userId: string, context: RuntimeContext, security: IdentitySecurityHistorySecurity): Promise<IdentitySecurityHistory>;
+    listSessionsForProvider(userId: string, context: RuntimeContext, security: ProviderIdentitySecurityAdministration): Promise<ProviderIdentitySessionListResponse>;
+    getSessionForProvider(userId: string, sessionId: string, context: RuntimeContext, security: ProviderIdentitySecurityAdministration): Promise<ProviderIdentitySessionResponse>;
+    revokeSessionForProvider(userId: string, sessionId: string, context: RuntimeContext, security: ProviderIdentitySecurityAdministration): Promise<ProviderSessionRevocationResult>;
+    revokeAllSessionsForProvider(userId: string, context: RuntimeContext, security: ProviderIdentitySecurityAdministration): Promise<ProviderAllSessionsRevocationResult>;
+    initiateRecoveryForProvider(userId: string, context: RuntimeContext, security: ProviderRecoverySecurity): Promise<ProviderRecoveryInitiationResult>;
+    suspendIdentityForProvider(userId: string, context: RuntimeContext, security: ProviderIdentityLifecycleSecurity): Promise<ProviderIdentityLifecycleResult>;
+    reactivateIdentityForProvider(userId: string, context: RuntimeContext, security: ProviderIdentityLifecycleSecurity): Promise<ProviderIdentityLifecycleResult>;
 
     getIdentityForProvider(
         userId: string,

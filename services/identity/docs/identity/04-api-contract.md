@@ -112,3 +112,13 @@ Identity translates supported failures to 400, 401, 403, 404, 409, 410 or 500. Z
 - `services/identity/src/api/identity-dtos.ts`
 - `services/identity/src/api/identity-http-error-translator.ts`
 - `services/identity/src/api/identity-route-validation.ts`
+
+## R3 — Provider Identity Security Administration
+
+R3 extends the Provider Admin Identity API with safe session administration, recovery initiation, suspension/reactivation, Security Summary, and security-history reads. Session and security responses must not expose tokens, provider session identifiers, password hashes, credential secrets, or equivalent secret material. Authentication-history event names may describe password/recovery activity because those names are operational facts, not credentials.
+
+The certified security-history surface is:
+
+`GET /api/v1/identities/:userId/security-history`
+
+It returns safe canonical Identity event metadata and does not expose raw event payloads.

@@ -176,20 +176,9 @@ Folksdo Engine™ + MongoDB + NATS</code></pre></div><div id="arch-state" class=
 </div>
 <div class="callout"><b>Authority separation</b> Tenant administration authority never implies Provider authority. Provider IAM 360 and provider directories require explicit provider authorization; tenant People and Person Detail remain tenant-scoped.</div>
 </section>
-<section id="r2-access" class="searchable"><h2>8. R2 — Effective Access &amp; Explanation</h2>
-<p class="lead">R2 exposes administration-grade Access intelligence from the same canonical Access facts and authorization evaluator used for enforcement.</p>
-<div class="callout ok"><b>Authority rule</b> R2 does not add a second authorization engine. Effective Access, Explanation, Summary, privileged classification and Impact remain Access-owned reads.</div>
-<div class="grid2">
-<div class="card"><h3>Effective Access</h3><p><code>GET /api/v1/access/effective-access/:membershipId</code></p><p>Returns Membership validity, role-derived and direct permission candidates, source assignments, effective dates, expiry and applicable active restrictions.</p></div>
-<div class="card"><h3>Access Explanation</h3><p><code>POST /api/v1/access/access-explanations/:membershipId</code></p><p>Evaluates <code>service.resource.action</code> through the canonical authorization evaluator and returns the resulting decision, stable reason code and evidence.</p></div>
-<div class="card"><h3>Access Summary</h3><p><code>GET /api/v1/access/access-summary/:membershipId</code></p><p>Compact projection derived from Effective Access: effective permission, role, direct permission, restriction and expiring-access counts plus privileged-access indicators.</p></div>
-<div class="card"><h3>Role Access Impact</h3><p><code>GET /api/v1/access/access-impact/roles/:roleId</code></p><p>Read-only pre-change view of affected Memberships, assignments, permissions and privileged permissions for a role.</p></div>
-</div>
-<div class="callout"><b>Privileged access</b> Privilege is a provider-owned policy over canonical Permission IDs and is separate from the existing Permission <code>classification</code> field. A role is privileged when its permission set contains a privileged permission.</div>
-<div class="callout"><b>Release gate</b> Administration consumers can answer: <b>What can this person do, and why?</b></div></section>
-<section id="events" class="searchable"><h2>9. Events & Reactions</h2><div class="grid3"><div class="card"><h3>Identity → Access</h3><p>User created, activated, disabled, archived and restored facts maintain Access-owned known identity state and authorization eligibility.</p></div><div class="card"><h3>Membership → Identity</h3><p>Invitation created, expired, revoked and redeemed facts maintain Identity's known-invitation projection.</p></div><div class="card"><h3>Membership → Access</h3><p>Membership created, activated, suspended, reactivated and archived facts maintain authorization lifecycle truth.</p></div></div><div class="callout"><b>Reaction rule</b> Cross-service reactions exist only when the receiving service owns the resulting consequence.</div></section>
+<section id="events" class="searchable"><h2>8. Events & Reactions</h2><div class="grid3"><div class="card"><h3>Identity → Access</h3><p>User created, activated, disabled, archived and restored facts maintain Access-owned known identity state and authorization eligibility.</p></div><div class="card"><h3>Membership → Identity</h3><p>Invitation created, expired, revoked and redeemed facts maintain Identity's known-invitation projection.</p></div><div class="card"><h3>Membership → Access</h3><p>Membership created, activated, suspended, reactivated and archived facts maintain authorization lifecycle truth.</p></div></div><div class="callout"><b>Reaction rule</b> Cross-service reactions exist only when the receiving service owns the resulting consequence.</div></section>
 <section id="errors" class="searchable"><h2>10. Failure Contracts</h2><table><tr><th>Condition</th><th>HTTP</th><th>Behavior</th></tr><tr><td>Malformed or invalid request</td><td>400</td><td>Stable <code>validation_error</code> for Zod validation failures.</td></tr><tr><td>Missing / invalid authentication</td><td>401</td><td>Stop before protected business execution.</td></tr><tr><td>Invalid Membership Context / insufficient authority</td><td>403</td><td>Fail closed.</td></tr><tr><td>Authorized resource not found</td><td>404</td><td>Stable not-found contract.</td></tr><tr><td>Lifecycle conflict</td><td>409</td><td>Preserve business invariant.</td></tr></table></section>
-<section id="certification" class="searchable"><h2>11. Testing & Certification</h2><div class="grid2"><div class="card"><h3>Repository Gate</h3><pre><code>pnpm typecheck
+<section id="certification" class="searchable"><h2>10. Testing & Certification</h2><div class="grid2"><div class="card"><h3>Repository Gate</h3><pre><code>pnpm typecheck
 pnpm test:integration
 pnpm test:e2e
 pnpm build
@@ -209,4 +198,10 @@ function tab(btn,id){const sec=btn.closest('section');sec.querySelectorAll('.tab
 function toggleTheme(){const d=document.documentElement;d.dataset.theme=d.dataset.theme==='dark'?'light':'dark';localStorage.setItem('iam-theme',d.dataset.theme)}
 if(localStorage.getItem('iam-theme'))document.documentElement.dataset.theme=localStorage.getItem('iam-theme');
 function globalSearch(q){q=q.trim().toLowerCase();document.querySelectorAll('.endpoint-card').forEach(c=>c.classList.toggle('hidden',q&&!c.dataset.search.includes(q)));document.querySelectorAll('section.searchable').forEach(s=>{if(!q){s.classList.remove('hidden');return}const cards=[...s.querySelectorAll('.endpoint-card')];if(cards.length){s.classList.toggle('hidden',cards.every(c=>c.classList.contains('hidden'))&&!s.innerText.toLowerCase().includes(q))}else s.classList.toggle('hidden',!s.innerText.toLowerCase().includes(q))})}
-</script></body></html>
+</script>
+<section id="r3-identity-security-administration">
+<h2>R3 — Identity Security Administration™</h2>
+<p><strong>Certification: GREEN.</strong> Provider Admin can safely inspect and revoke sessions, initiate recovery, suspend/reactivate identities, inspect Security Summary, and investigate Identity-owned authentication/security history without credential exposure or bypassing Identity → Membership → Access authority boundaries.</p>
+<p>Suspension blocks authentication and removes usable IAM authority through the existing lifecycle chain. Reactivation restores eligibility only; it does not recreate sessions or manufacture Membership/Access state. Security history is derived from canonical Identity events and is not a replacement for Platform Audit™.</p>
+</section>
+</body></html>

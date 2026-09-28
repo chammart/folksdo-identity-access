@@ -322,6 +322,12 @@ function createIdentityOutboxSubjects(): IdentityOutboxSubjects {
 
         credentialUpdated:
             "identity.credential_updated",
+
+        userDisabled:
+            "identity.user_disabled",
+
+        userRestored:
+            "identity.user_restored",
     };
 }
 

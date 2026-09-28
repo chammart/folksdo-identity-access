@@ -338,3 +338,7 @@ export class IdentityUserNotFoundError extends IdentityError {
         super("identity_user_not_found", "Identity user was not found.");
     }
 }
+
+export class InvalidIdentityLifecycleTransitionError extends IdentityError {
+    public constructor() { super("invalid_identity_lifecycle_transition", "Identity lifecycle transition is not allowed."); }
+}

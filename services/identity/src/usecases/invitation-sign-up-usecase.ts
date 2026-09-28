@@ -203,6 +203,12 @@ export interface IdentityOutboxSubjects {
 
     readonly credentialUpdated:
     string;
+
+    readonly userDisabled:
+    string;
+
+    readonly userRestored:
+    string;
 }
 
 // -----------------------------------------------------------------------------

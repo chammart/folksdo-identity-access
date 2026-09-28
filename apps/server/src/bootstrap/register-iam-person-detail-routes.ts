@@ -8,7 +8,7 @@
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { translateAccessHttpError, type AccessApi, type AccessApiRequestContext } from "@folksdo-identity-access/access";
-import { translateIdentityHttpError, type IdentityApi, type IdentityProviderReadSecurityResolver } from "@folksdo-identity-access/identity";
+import { identityPermissions, translateIdentityHttpError, type IdentityApi, type IdentityProviderReadSecurityResolver } from "@folksdo-identity-access/identity";
 import { translateMembershipHttpError, type MembershipApi, type MembershipResult, type MembershipRouteContextResolver } from "@folksdo-identity-access/membership";
 
 interface IdentityParams { readonly userId: string; }
@@ -26,7 +26,10 @@ export function registerIamPersonDetailRoutes(input: {
         execute(request, reply, async () => {
             const resolved = await input.providerSecurityResolver.resolvePlatform({ request, reply });
             const identity = await input.identityApi.getIdentityForProvider(request.params.userId, resolved.context, resolved.security);
-            const security = await input.identityApi.getIdentitySecuritySummary(request.params.userId, resolved.context, resolved.security);
+            const security = await input.identityApi.getIdentitySecuritySummary(request.params.userId, resolved.context, {
+                ...resolved.security,
+                authorizationPermission: identityPermissions.view,
+            });
             const memberships = await listAllProviderMemberships(input.membershipApi, request.params.userId, resolved.context, resolved.security);
             const accessContext = toAccessContext(resolved.context, resolved.security.scope.membershipId, resolved.security.scope.tenantId, "platform");
             const relationships = await Promise.all(memberships.map(membership => composeRelationship(input.accessApi, membership, accessContext)));
@@ -43,7 +46,10 @@ export function registerIamPersonDetailRoutes(input: {
             if (!membership) return reply.status(404).send({ error: { code: "membership_not_found", message: "Person is not a member of this tenant." } });
             const securityScope = { scope: { type: "tenant" as const, tenantId: request.params.tenantId, membershipId: actorMembership.membershipId } };
             const identity = await input.identityApi.getIdentityForTenantAdministration(request.params.userId, context, securityScope);
-            const security = await input.identityApi.getIdentitySecuritySummary(request.params.userId, context, securityScope);
+            const security = await input.identityApi.getIdentitySecuritySummary(request.params.userId, context, {
+                ...securityScope,
+                authorizationPermission: identityPermissions.view,
+            });
             const relationship = await composeRelationship(input.accessApi, membership, toAccessContext(context, actorMembership.membershipId, request.params.tenantId, "tenant"));
             return { identity, membership: relationship, security };
         }));

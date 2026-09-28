@@ -66,6 +66,27 @@ export interface IdentityAdministrationSessionReadStore {
     ): Promise<readonly IdentitySessionState[]>;
 }
 
+
+export interface IdentitySecurityHistoryEvent {
+    readonly eventType: string;
+    readonly occurredAt: string;
+    readonly aggregateType: string;
+    readonly aggregateId: string;
+    readonly requestId?: string;
+    readonly correlationId?: string;
+    readonly actorId?: string;
+    readonly tenantId?: string;
+}
+
+export interface IdentitySecurityHistoryReadStore {
+    listSecurityEventsByUserId(userId: string): Promise<readonly IdentitySecurityHistoryEvent[]>;
+}
+
+export interface IdentitySecuritySummaryReadStore {
+    findActivePasswordCredentialByUserId(userId: string): Promise<IdentityCredentialState | null>;
+    findLatestPasswordResetRequestByUserId(userId: string): Promise<{ readonly status: "requested"; readonly requestedAt: string } | null>;
+}
+
 // -----------------------------------------------------------------------------
 // GENERAL IDENTITY READ STORE
 // -----------------------------------------------------------------------------

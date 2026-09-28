@@ -437,6 +437,35 @@ export async function grantProviderIdentityReads(
     }
 }
 
+
+export async function grantProviderIdentitySecurityAdministration(identity: CertifiedIdentity): Promise<void> {
+    await prepareProviderIdentityReadContext(identity);
+    const runtime = await getIamIntegrationRuntime();
+    const now = new Date().toISOString();
+    const permissions = [
+        ["session", "list"],
+        ["session", "view"],
+        ["session", "revoke"],
+        ["session", "revoke-all"],
+        ["recovery", "initiate"],
+        ["identity", "suspend"],
+        ["identity", "reactivate"],
+        ["identity", "security-summary-view"],
+        ["identity", "security-history-view"],
+    ] as const;
+    for (const [resource, action] of permissions) {
+        const permissionId = `permission_identity_${resource}_${action.replaceAll("-", "_")}`;
+        await runtime.database.database.collection("access_permissions").updateOne(
+            { permissionId },
+            { $set: { permissionId, service: "identity", resource, action, displayName: `Identity ${resource} ${action}`, description: `Allows provider Identity ${resource} ${action} certification.`, classification: "administrative", createdAt: now } },
+            { upsert: true },
+        );
+        await runtime.database.database.collection("access_permission_assignments").insertOne({
+            assignmentId: `assignment_${resource}_${action}_${randomUUID()}`, identityId: identity.userId, membershipId: identity.membershipId, tenantId: identity.tenantId, permissionId, assignmentType: "grant", scope: { scopeType: "tenant" }, status: "active", assignedBy: "system:identity-integration", effectiveFrom: now, activatedAt: now, suspensionSources: [], createdAt: now, updatedAt: now,
+        });
+    }
+}
+
 export async function postJson(
     runtime: IamIntegrationRuntime,
     url: string,

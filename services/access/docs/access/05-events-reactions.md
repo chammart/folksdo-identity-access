@@ -45,3 +45,7 @@ Commercial-state subjects including created, activated, suspended, resumed, rene
 
 ## Reaction guarantees
 Reactions adapt upstream event contracts into existing Access lifecycle use cases. They do not directly mutate persistence or execute business rules. Source event identifiers are propagated as source references so replay/idempotency semantics remain explicit.
+
+## R3 Identity lifecycle integration
+
+Identity suspension/reactivation continues through the existing Identity → Membership → Access lifecycle reaction chain. Suspension removes usable authority. Reactivation restores eligibility only; Access does not manufacture grants, assignments, roles, or sessions as a consequence of reactivation.

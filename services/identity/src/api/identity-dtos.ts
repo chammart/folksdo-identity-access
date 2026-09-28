@@ -195,3 +195,40 @@ export interface ProviderIdentityListResponse {
     readonly offset: number;
     readonly limit: number;
 }
+
+// -----------------------------------------------------------------------------
+// PROVIDER IDENTITY SECURITY ADMINISTRATION
+// -----------------------------------------------------------------------------
+
+export interface ProviderIdentitySessionResponse {
+    readonly sessionId: string;
+    readonly userId: string;
+    readonly status: "active" | "signed_out" | "revoked" | "expired";
+    readonly issuedAt: string;
+    readonly expiresAt: string;
+    readonly createdAt: string;
+    readonly updatedAt: string;
+    readonly endedAt?: string;
+}
+
+export interface ProviderIdentitySessionListResponse {
+    readonly items: readonly ProviderIdentitySessionResponse[];
+}
+
+export interface ProviderSessionRevocationResult {
+    readonly userId: string;
+    readonly sessionId: string;
+    readonly status: "revoked";
+    readonly revokedAt: string;
+}
+
+export interface ProviderAllSessionsRevocationResult {
+    readonly userId: string;
+    readonly revokedSessions: number;
+    readonly revokedAt: string;
+}
+
+export interface ProviderRecoveryInitiationResult {
+    readonly userId: string;
+    readonly recoveryInitiated: true;
+}

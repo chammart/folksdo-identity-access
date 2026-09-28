@@ -23,6 +23,8 @@ import type {
     IdentityCredentialReadStore,
     IdentityPasswordResetSessionReadStore,
     IdentityReadStore,
+    IdentitySecuritySummaryReadStore,
+    IdentitySecurityHistoryReadStore,
     ListUsersInput,
     ListUsersResult,
 } from "./identity-read-store";
@@ -64,7 +66,9 @@ export function createMongoIdentityReadStore(
     IdentityReadStore
     & IdentityCredentialReadStore
     & IdentityPasswordResetSessionReadStore
-    & IdentityAdministrationSessionReadStore {
+    & IdentityAdministrationSessionReadStore
+    & IdentitySecuritySummaryReadStore
+    & IdentitySecurityHistoryReadStore {
     const users =
         input.database.collection<IdentityUserState>(
             input.collections.users,
@@ -83,6 +87,13 @@ export function createMongoIdentityReadStore(
     const sessions =
         input.database.collection<IdentitySessionState>(
             input.collections.sessions,
+        );
+
+    const events = input.database.collection<Record<string, any>>("engine_events");
+
+    const passwordResetRequests =
+        input.database.collection<{ userId: string; status: "requested"; requestedAt: string }>(
+            "identity_password_reset_requests",
         );
 
     return {
@@ -113,6 +124,23 @@ export function createMongoIdentityReadStore(
                 });
 
             return credential;
+        },
+        async listSecurityEventsByUserId(userId: string) {
+            const records = await events.find({
+                eventType: { $regex: "^identity\\." },
+                $or: [{ aggregateId: userId }, { "payload.userId": userId }, { "payload.identityId": userId }],
+            }).sort({ occurredAt: -1, eventId: -1 }).limit(200).toArray();
+            return records.map((record) => ({
+                eventType: String(record.eventType), occurredAt: String(record.occurredAt),
+                aggregateType: String(record.aggregateType), aggregateId: String(record.aggregateId),
+                ...(typeof record.metadata?.requestId === "string" ? { requestId: record.metadata.requestId } : {}),
+                ...(typeof record.metadata?.correlationId === "string" ? { correlationId: record.metadata.correlationId } : {}),
+                ...(typeof record.metadata?.actorId === "string" ? { actorId: record.metadata.actorId } : {}),
+                ...(typeof record.metadata?.tenantId === "string" ? { tenantId: record.metadata.tenantId } : {}),
+            }));
+        },
+        async findLatestPasswordResetRequestByUserId(userId: string): Promise<{ status: "requested"; requestedAt: string } | null> {
+            return await passwordResetRequests.findOne({ userId }, { sort: { requestedAt: -1 } });
         },
         async findUserByEmail(
             email:

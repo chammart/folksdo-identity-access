@@ -41,6 +41,7 @@ import {
     IdentityAuthorizationUnavailableError,
     IdentityUserNotFoundError,
     InvalidAuthenticationCredentialsError,
+    InvalidIdentityLifecycleTransitionError,
     InvalidCurrentPasswordError,
     InvalidPasswordResetTokenError,
     InvalidSignupStateError,
@@ -252,6 +253,8 @@ export function translateIdentityHttpError(
         UserAlreadyVerifiedError
         || error instanceof
         PasswordReuseNotAllowedError
+        || error instanceof
+        InvalidIdentityLifecycleTransitionError
     ) {
         return toIdentityError(
             409,

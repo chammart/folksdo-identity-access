@@ -17,3 +17,8 @@ export * from "./get-identity-for-provider-usecase";
 export * from "./get-identity-for-tenant-administration-usecase";
 export * from "./list-identities-for-provider-usecase";
 export * from "./get-identity-security-summary-usecase";
+export * from "./get-identity-security-history-usecase";
+export * from "./provider-session-administration-usecase";
+export * from "./provider-recovery-initiation-usecase";
+
+export * from "./provider-identity-lifecycle-usecase";
