@@ -44,3 +44,7 @@ A capability may depend on another capability's explicit API, authorization port
 - `apps/server/src/authorization/`
 - `services/identity/src/runtime/register-identity-reactions.ts`
 - `services/identity/src/authorization/identity-permissions.ts`
+
+## R2 interpretation of WHAT
+
+R2 expands the Access side of WHO → WHERE → WHAT with administration-grade intelligence. The effective-access resolver and authorization evaluator remain authoritative. Explanation describes that evaluator, Summary derives from effective access, privileged-role status derives from provider-owned privileged-permission policy, and role impact is a read-only projection of Access-owned facts.

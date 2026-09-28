@@ -70,3 +70,7 @@ Primary implementation references:
 - `services/membership/src/`
 - `services/access/src/`
 - `pnpm-workspace.yaml`
+
+## R2 access intelligence
+
+R2 preserves the IAM authority chain. Identity continues to own WHO and Membership continues to own WHERE; Effective Access, Access Explanation, Access Summary, privileged-access classification and Access Impact are Access-owned WHAT reads. Cross-capability administration experiences may compose those reads but must not recompute Access decisions outside Access Service™.

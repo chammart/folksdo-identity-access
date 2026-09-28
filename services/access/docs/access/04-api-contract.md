@@ -29,6 +29,10 @@ All administrative endpoints require authenticated context and the canonical Acc
 | POST | `/restrictions` | 201 | Create restriction |
 | POST | `/restrictions/:restrictionId/remove` | 200 | Remove restriction |
 | GET | `/restrictions` | 200 | List restrictions |
+| GET | `/effective-access/:membershipId` | 200 | Get administration-grade effective access |
+| POST | `/access-explanations/:membershipId` | 200 | Explain an Access decision for a target Membership |
+| GET | `/access-summary/:membershipId` | 200 | Get compact Access summary |
+| GET | `/access-impact/roles/:roleId` | 200 | Get read-only role access impact |
 | POST | `/authorize` | 200 | Evaluate authorization |
 
 ## Role assignment administration query
@@ -52,3 +56,20 @@ HTTP pagination query values are parsed from canonical non-negative integer stri
 - Insufficient authority is rejected with forbidden semantics.
 - Resource and lifecycle conflicts are translated by Access HTTP error mapping.
 - DTO and query schemas in `services/access/src/api/dto` and `validation` are the executable source of truth for field-level contracts.
+
+
+## R2 administration read contracts
+
+### Effective Access
+`GET /effective-access/:membershipId` exposes the target Membership's effective Access facts using the same resolver that feeds runtime authorization. The result includes Membership/Identity/Tenant identity, Membership validity, effective permission candidates, their role/direct source and source assignment, effective/expiry dates, applicable active restrictions and evaluation time.
+
+### Access Explanation
+`POST /access-explanations/:membershipId` accepts the canonical permission key (`service`, `resource`, `action`) and evaluates it for the selected target Membership through the canonical authorization evaluator. The response returns the resulting decision, stable reason code and evidence. Explanation is therefore descriptive of enforcement, not a second policy engine.
+
+### Access Summary
+`GET /access-summary/:membershipId` derives compact administration counts from Effective Access, including effective permissions, roles, direct permissions, restrictions, expiring access, privileged permission count and `hasPrivilegedAccess`.
+
+### Role Access Impact
+`GET /access-impact/roles/:roleId` returns read-only pre-change impact for the selected role: affected Membership IDs, assignment IDs, permission IDs, privileged permission IDs and whether the role is privileged. Role privilege is derived from provider-owned privileged-permission classification.
+
+All four reads remain tenant-authorized and fail closed on foreign-tenant targets. Their route permissions are canonical Access administrative permissions.

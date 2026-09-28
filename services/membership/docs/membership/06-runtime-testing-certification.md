@@ -64,3 +64,7 @@ Local certification and staging certification remain separate contracts.
 ## Operational Readiness
 
 Membership is ready only when its runtime dependencies required by the assembled IAM server are ready. Certification must fail closed on unavailable dependencies, invalid authentication/context, broken authorization, or failed required business scenarios.
+
+## R2 participation
+
+Membership has no new R2 authority or mutation contract. R2 release certification creates and activates the target Membership through the real Membership capability and waits for the existing Membership → Access reaction before evaluating access. Effective Access therefore preserves Membership validity and tenant-context semantics rather than treating Access assignments alone as sufficient authority.

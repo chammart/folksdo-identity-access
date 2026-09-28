@@ -45,3 +45,10 @@
 Access also owns lifecycle use cases invoked by reactions to activate, suspend, archive, restore or reactivate authorization for identities, memberships and tenants; provision tenant authorization; record known membership authorization; and apply subscription capabilities/security-policy changes.
 
 These lifecycle operations are not alternate owners of upstream business state. They maintain the Access authorization model from replayable upstream facts.
+
+## R2 access intelligence
+- Get Effective Access — return active role-derived/direct permission candidates, effective/expiry facts, Membership validity and applicable restrictions for an authorized target Membership.
+- Explain Access — evaluate a requested permission for the target Membership through the canonical authorization evaluator and return `allow`/`deny`, reason code and evidence.
+- Get Access Summary — compact counts derived from Effective Access, including role/direct/restriction/expiring access and privileged-access indicators.
+- Classify Privileged Access — provider-owned permission-ID policy; role privilege is derived from role permissions rather than stored independently.
+- Get Role Access Impact — read-only pre-change impact showing affected Memberships, assignments, permissions and privileged permissions for a role.

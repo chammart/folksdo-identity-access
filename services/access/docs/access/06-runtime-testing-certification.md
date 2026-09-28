@@ -22,3 +22,20 @@ Staging certification belongs to the IAM deployment pipeline. The staging deploy
 
 ## Operational rule
 Local and staging certification are separate consumers of the same production contracts. Staging must not depend on a developer workstation or Folksdo Operations™.
+
+## R2 certification
+
+R2 certification uses the real IAM runtime, Engine, MongoDB, NATS/reaction paths and Fastify HTTP boundary. The release gate creates a real Identity and Membership, waits for Access-known lifecycle facts, then proves the complete access-intelligence chain:
+
+- role-derived and direct effective access;
+- effective/expiry inclusion and exclusion;
+- restriction facts and restriction-driven deny explanation;
+- explanation decision/reason consistency with canonical authorization;
+- summary consistency with effective access;
+- privileged permission and derived privileged-role classification;
+- role access impact;
+- cross-tenant denial for R2 administration reads.
+
+The release-level gate is `tests/e2e/foundation/iam-r2-effective-access-explanation.e2e.test.ts`. Patch-focused E2E coverage remains in `tests/e2e/access/access-effective-access.e2e.test.ts`.
+
+R2 adds no new canonical state, business events or outbox stream. Certification therefore focuses on read consistency, authorization boundaries and reuse of existing lifecycle reactions.

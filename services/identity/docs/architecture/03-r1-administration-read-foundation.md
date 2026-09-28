@@ -51,6 +51,6 @@ The host owns transport composition only. It does not own Identity, Membership o
 
 ## Certification
 
-R1 is locally certified through the real IAM runtime with real MongoDB/NATS/Engine participation and the assembled Fastify HTTP boundary. The release-level E2E gate proves the five R1 administration capabilities together, including provider/tenant authority separation and cross-tenant denial.
+R1 is locally certified through the real IAM runtime with real MongoDB/NATS/Engine participation and the assembled Fastify HTTP boundary. The release-level E2E gate proves the R1 administration read contract together, including provider/tenant authority separation and cross-tenant denial.
 
 Staging certification remains a separate release step and must run against the deployed immutable R1 image before promotion to production.

@@ -30,3 +30,13 @@ Access does not own authentication credentials or sessions, Membership lifecycle
 ## Administration Read Contract
 
 Access owns role-usage and access-summary facts used by R1 administration experiences. Roles-by-member, members-by-role and assignment counts are projections of Access-owned Role Assignment state; they do not create a separate administration aggregate. Tenant reads remain tenant-bound and provider authority is explicit.
+
+## R2 Effective Access & Explanation
+
+R2 exposes administration-grade access intelligence without creating a second authorization authority. Effective Access, Access Explanation, Access Summary, privileged-access classification and Access Impact remain Access-owned reads over canonical Access facts.
+
+- Effective Access combines role-derived and direct permission candidates with Membership validity, effective dates, expiry and applicable active restrictions.
+- Access Explanation evaluates a requested permission through the same canonical authorization evaluator used by runtime enforcement and returns its decision, stable reason code and evidence.
+- Access Summary is derived from Effective Access; it is not separately persisted.
+- Privileged access is a provider-owned policy over canonical permission IDs. It is deliberately separate from `Permission.classification`, which already represents catalog scope. A role is privileged when its permission set contains a privileged permission.
+- Access Impact is a read-only pre-change projection over Access-owned role, assignment and permission facts. R2 role impact does not mutate the role or reserve a future mutation.

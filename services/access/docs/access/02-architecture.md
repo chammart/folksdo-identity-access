@@ -31,3 +31,13 @@ Access may consume upstream facts but does not mutate Identity, Membership, Tena
 ## R1 administration composition
 
 The IAM host may compose Access read results with Identity and Membership for Tenant People and IAM 360. The host calls Access APIs/read contracts; it does not read Access MongoDB collections directly and does not become an authorization source of truth.
+
+## R2 access-intelligence architecture
+
+R2 extends the existing authorization path rather than adding a parallel evaluator:
+
+`canonical Access facts → effective-permission resolver → authorization evaluator → administration reads`
+
+Effective Access exposes the resolver facts required for administration. Access Explanation invokes the canonical authorization evaluator for the selected target Membership and permission. Access Summary aggregates the same Effective Access result. Privileged classification is a provider-owned policy applied to canonical Permission IDs, and role privilege is derived from role composition. Role Access Impact combines the existing role-usage/assignment reads with role permissions and privilege classification.
+
+The IAM host may consume these Access reads for cross-capability administration projections, but it does not recompute effective permissions, explanation decisions, privilege, or impact.

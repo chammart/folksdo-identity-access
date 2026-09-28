@@ -69,3 +69,7 @@ A `503 not_ready` response is correct when required runtime dependencies are not
 - `scripts/certification/`
 - `acceptance/bruno/Folksdo IAM/`
 - `apps/server/src/bootstrap/bootstrap-server.ts`
+
+## R2 participation
+
+Identity has no new R2 authority or mutation contract. R2 release certification uses a real Identity lifecycle and waits for the existing Identity → Access known-identity reaction before evaluating target-member access. This proves Access intelligence does not bypass Identity availability semantics.
