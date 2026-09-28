@@ -2946,6 +2946,18 @@ function createAccessApiOperations(
             } as Parameters<typeof input.useCases.restrictions.list.execute>[0]);
         },
 
+        getEffectiveAccess: async (membershipId: string, context: AccessApiRequestContext) => {
+            const tenantId = requireTenantAdministrativeContext(context).tenantId;
+            await assertMembershipInTenant(membershipId, tenantId);
+            await authorizeAdministrativeOperation("getEffectiveAccess", context, "membership", membershipId);
+            const result = await input.useCases.authorization.effectiveAccess.execute({ membershipId, tenantId });
+            return {
+                ...result,
+                effectivePermissions: result.effectivePermissions,
+                restrictions: result.restrictions,
+            };
+        },
+
         authorize: async (
             request: Record<string, unknown>,
             context: AccessApiRequestContext,

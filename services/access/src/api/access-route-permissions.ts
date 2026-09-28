@@ -127,6 +127,13 @@ export const ACCESS_ROUTE_PERMISSIONS = {
         ACCESS_ADMINISTRATIVE_PERMISSIONS.policyArchive,
 
     // -------------------------------------------------------------------------
+    // EFFECTIVE ACCESS
+    // -------------------------------------------------------------------------
+
+    getEffectiveAccess:
+        ACCESS_ADMINISTRATIVE_PERMISSIONS.effectiveAccessView,
+
+    // -------------------------------------------------------------------------
     // ACCESS RESTRICTIONS
     // -------------------------------------------------------------------------
 

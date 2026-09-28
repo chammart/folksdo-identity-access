@@ -161,6 +161,9 @@ export interface CreateAccessApiDependencies {
     // AUTHORIZATION
     // -------------------------------------------------------------------------
 
+    readonly getEffectiveAccess:
+    AccessApiOperation<"getEffectiveAccess">;
+
     readonly authorize:
     AccessApiOperation<"authorize">;
 }
@@ -410,6 +413,9 @@ export function createAccessApi(
         // ---------------------------------------------------------------------
         // AUTHORIZATION
         // ---------------------------------------------------------------------
+
+        getEffectiveAccess: (membershipId, context) =>
+            dependencies.getEffectiveAccess(membershipId, context),
 
         authorize: (
             request,

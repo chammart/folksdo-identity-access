@@ -43,6 +43,7 @@ import {
     createRoleRoute,
     getPermissionRoute,
     getRoleRoute,
+    getEffectiveAccessRoute,
     grantPermissionRoute,
     listPermissionAssignmentsRoute,
     listPermissionsRoute,
@@ -72,6 +73,10 @@ interface AccessPermissionParameters {
 
 interface AccessRoleParameters {
     readonly roleId: string;
+}
+
+interface AccessMembershipParameters {
+    readonly membershipId: string;
 }
 
 interface AccessRoleAssignmentParameters {
@@ -1021,6 +1026,19 @@ export async function registerAccessRoutes(
                     );
                 },
             ),
+    );
+
+    // -------------------------------------------------------------------------
+    // EFFECTIVE ACCESS
+    // -------------------------------------------------------------------------
+
+    server.get(
+        `${ACCESS_API_PREFIX}${getEffectiveAccessRoute.path}`,
+        async (request: FastifyRequest<{ Params: AccessMembershipParameters }>, reply) =>
+            executeAccessRoute(reply, getEffectiveAccessRoute.successStatusCode, async () => {
+                const context = await contextResolver.resolve(request);
+                return api.getEffectiveAccess(request.params.membershipId, context);
+            }),
     );
 
     // -------------------------------------------------------------------------

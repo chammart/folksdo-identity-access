@@ -21,6 +21,7 @@ export * from "./permission-assignment-dto";
 export * from "./authorization-policy-dto";
 export * from "./access-restriction-dto";
 export * from "./authorization-decision-dto";
+export * from "./effective-access-dto";
 
 // Command request DTOs
 export * from "./create-permission-request";

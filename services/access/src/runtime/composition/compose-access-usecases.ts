@@ -37,6 +37,7 @@ import {
     CurrentAuthorizationUseCase,
     ExpireAssignmentUseCase,
     ExpireRestrictionUseCase,
+    GetEffectiveAccessUseCase,
     GetPermissionUseCase,
     GetPolicyUseCase,
     GetRestrictionUseCase,
@@ -104,6 +105,7 @@ export interface ComposedAccessUseCases {
     readonly authorization: {
         readonly authorizeAction: AuthorizeActionUseCase;
         readonly current: CurrentAuthorizationUseCase;
+        readonly effectiveAccess: GetEffectiveAccessUseCase;
     };
 
     readonly expirations: {
@@ -187,6 +189,7 @@ export function composeAccessUseCases(
         authorization: {
             authorizeAction: new AuthorizeActionUseCase(dependencies),
             current: new CurrentAuthorizationUseCase(dependencies),
+            effectiveAccess: new GetEffectiveAccessUseCase(dependencies),
         },
 
         expirations: {

@@ -22,6 +22,7 @@ import type {
     ApiArchivePolicyRequest,
     ApiArchiveRoleRequest,
     ApiAssignRoleRequest,
+    EffectiveAccessDto,
     AuthorizationDecisionDto,
     AuthorizationPolicyDto,
     AuthorizeRequest,
@@ -381,6 +382,11 @@ export interface AccessRestrictionApi {
 // -----------------------------------------------------------------------------
 
 export interface AccessAuthorizationApi {
+    getEffectiveAccess(
+        membershipId: string,
+        context: AccessApiRequestContext,
+    ): Promise<EffectiveAccessDto>;
+
     authorize(
         request: AuthorizeRequest,
         context: AccessApiRequestContext,

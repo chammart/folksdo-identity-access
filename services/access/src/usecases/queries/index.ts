@@ -12,6 +12,7 @@
 
 export * from "./authorize-action-usecase";
 export * from "./current-authorization-usecase";
+export * from "./get-effective-access-usecase";
 
 export * from "./get-permission-usecase";
 export * from "./list-permissions-usecase";

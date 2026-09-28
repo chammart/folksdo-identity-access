@@ -692,6 +692,18 @@ export const listRestrictionsRoute = {
         false,
 } as const satisfies AccessRouteDefinition<"listRestrictions">;
 
+
+export const getEffectiveAccessRoute = {
+    routeId: "access.effective-access.view",
+    method: "GET",
+    path: "/effective-access/:membershipId",
+    operation: "getEffectiveAccess",
+    successStatusCode: 200,
+    hasBody: false,
+    hasQuery: false,
+    hasParameters: true,
+} as const satisfies AccessRouteDefinition<"getEffectiveAccess">;
+
 // -----------------------------------------------------------------------------
 // AUTHORIZATION ROUTES
 // -----------------------------------------------------------------------------
@@ -767,6 +779,7 @@ export const accessRestrictionRoutes = [
 ] as const;
 
 export const accessAuthorizationRoutes = [
+    getEffectiveAccessRoute,
     authorizeRoute,
 ] as const;
 
