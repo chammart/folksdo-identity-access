@@ -1368,6 +1368,22 @@ function createAccessApiOperations(
     ): string =>
         context.actor.actorId;
 
+    const eventMetadata = (
+        context: AccessApiRequestContext,
+    ): Readonly<Record<string, unknown>> => ({
+        requestId: context.requestId,
+        correlationId: context.correlationId,
+        ...(context.causationId === undefined ? {} : { causationId: context.causationId }),
+        actorId: context.actor.actorId,
+        actorType: context.actor.actorType,
+        ...(context.tenant === undefined
+            ? {}
+            : {
+                tenantId: context.tenant.tenantId,
+                tenantType: context.tenant.tenantType,
+            }),
+    });
+
     const administrativeContext = (
         context: AccessApiRequestContext,
     ) => {
@@ -1647,6 +1663,9 @@ function createAccessApiOperations(
                             request.permissionIds,
                         createdBy:
                             actorId(context),
+
+                        metadata:
+                            eventMetadata(context),
                     } as Parameters<typeof input.useCases.roles.create.execute>[0]);
 
                 return toRoleDto({
@@ -1706,6 +1725,9 @@ function createAccessApiOperations(
                     permissionIds,
                     createdBy:
                         actorId(context),
+
+                    metadata:
+                        eventMetadata(context),
                 } as Parameters<typeof input.useCases.roles.create.execute>[0]);
 
             return toRoleDto({

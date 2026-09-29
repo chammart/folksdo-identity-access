@@ -58,6 +58,8 @@ export interface CreateRoleRequest {
     readonly permissionIds?: readonly string[];
 
     readonly createdBy: string;
+
+    readonly metadata: Readonly<Record<string, unknown>>;
 }
 
 // -----------------------------------------------------------------------------
@@ -210,6 +212,9 @@ export class CreateRoleUseCase {
                             createdBy:
                                 request.createdBy,
                         },
+
+                        metadata:
+                            request.metadata,
                     },
                 ],
 
@@ -246,6 +251,9 @@ export class CreateRoleUseCase {
                             lifecycleStatus:
                                 role.lifecycleStatus,
                         },
+
+                        metadata:
+                            request.metadata,
                     },
                 ],
             },

@@ -55,6 +55,18 @@ export async function createAccessRole(input?: { tenantId?: string; permissionId
         description: "Access integration certification role.",
         permissionIds: input?.permissionIds ?? [],
         createdBy: "system:access-integration",
+        metadata: {
+            requestId: `request_${randomUUID()}`,
+            correlationId: `correlation_${randomUUID()}`,
+            actorId: "system:access-integration",
+            actorType: "service",
+            ...(input?.tenantId === undefined
+                ? {}
+                : {
+                    tenantId: input.tenantId,
+                    tenantType: "customer",
+                }),
+        },
     });
 }
 
