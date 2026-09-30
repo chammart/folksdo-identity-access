@@ -187,14 +187,25 @@ jobs:
           script_stop: true
           envs: VPS_DEPLOY_ROOT,DEPLOY_PATH_SUFFIX,IMAGE_TAG,COMPOSE_PROJECT,HEALTH_URL,READY_URL
           script: |
-            set -euo pipefail
+            set -Eeuo pipefail
+            trap 'status=$?; echo "DEPLOY FAILED (exit ${status}) at line ${LINENO}: ${BASH_COMMAND}" >&2; exit ${status}' ERR
+
             SOURCE_REVISION="${{ github.sha }}"
             test -n "${SOURCE_REVISION}"
             DEPLOY_PATH="${VPS_DEPLOY_ROOT}/${DEPLOY_PATH_SUFFIX}"
+
+            echo "Deploying ${IMAGE_TAG} to ${DEPLOY_PATH}"
+            echo "[1/7] Enter deployment directory"
             cd "${DEPLOY_PATH}"
+
+            echo "[2/7] Validate staging environment file"
             test -f .env
+
+            echo "[3/7] Activate uploaded Compose definition"
+            test -f docker-compose.staging.yml
             mv -f docker-compose.staging.yml docker-compose.yml
 
+            echo "[4/7] Updating immutable deployment identity"
             if grep -q '^FOLKSDO_IAM_IMAGE_TAG=' .env; then
               sed -i "s|^FOLKSDO_IAM_IMAGE_TAG=.*|FOLKSDO_IAM_IMAGE_TAG=${IMAGE_TAG}|" .env
             else
@@ -207,7 +218,13 @@ jobs:
               printf 'FOLKSDO_IAM_SOURCE_REVISION=%s\n' "${SOURCE_REVISION}" >> .env
             fi
 
+            echo "[5/7] Validate Compose configuration"
+            docker compose --project-name "${COMPOSE_PROJECT}" config --quiet
+
+            echo "[6/7] Pull immutable image"
             docker compose --project-name "${COMPOSE_PROJECT}" pull
+
+            echo "[7/7] Start staging services"
             docker compose --project-name "${COMPOSE_PROJECT}" up -d --remove-orphans
 
             for URL in "${HEALTH_URL}" "${READY_URL}"; do
