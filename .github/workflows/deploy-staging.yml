@@ -187,9 +187,7 @@ jobs:
           script_stop: true
           envs: VPS_DEPLOY_ROOT,DEPLOY_PATH_SUFFIX,IMAGE_TAG,COMPOSE_PROJECT,HEALTH_URL,READY_URL
           script: |
-            set -Eeuo pipefail
-            trap 'status=$?; echo "DEPLOY FAILED (exit ${status}) at line ${LINENO}: ${BASH_COMMAND}" >&2; exit ${status}' ERR
-
+            set -euo pipefail
             SOURCE_REVISION="${{ github.sha }}"
             test -n "${SOURCE_REVISION}"
             DEPLOY_PATH="${VPS_DEPLOY_ROOT}/${DEPLOY_PATH_SUFFIX}"
@@ -212,11 +210,8 @@ jobs:
               printf '\nFOLKSDO_IAM_IMAGE_TAG=%s\n' "${IMAGE_TAG}" >> .env
             fi
 
-            if grep -q '^FOLKSDO_IAM_SOURCE_REVISION=' .env; then
-              sed -i "s|^FOLKSDO_IAM_SOURCE_REVISION=.*|FOLKSDO_IAM_SOURCE_REVISION=${SOURCE_REVISION}|" .env
-            else
-              printf 'FOLKSDO_IAM_SOURCE_REVISION=%s\n' "${SOURCE_REVISION}" >> .env
-            fi
+            # Source revision is immutable deployment metadata, not persistent staging configuration.
+            export FOLKSDO_IAM_SOURCE_REVISION="${SOURCE_REVISION}"
 
             echo "[5/7] Validate Compose configuration"
             docker compose --project-name "${COMPOSE_PROJECT}" config --quiet
@@ -224,7 +219,7 @@ jobs:
             echo "[6/7] Pull immutable image"
             docker compose --project-name "${COMPOSE_PROJECT}" pull
 
-            echo "[7/7] Start staging services"
+            echo "[7/7] Start staging containers"
             docker compose --project-name "${COMPOSE_PROJECT}" up -d --remove-orphans
 
             for URL in "${HEALTH_URL}" "${READY_URL}"; do
