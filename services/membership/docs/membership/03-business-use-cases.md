@@ -66,3 +66,15 @@ Translates external Identity/tenant/subscription lifecycle facts into Membership
 ## Business Outcome
 
 Every command changes only Membership-owned truth. Cross-boundary consequences are communicated through replayable events/outbox messages rather than direct ownership of another service's state.
+
+## R5 Administration Workflows & Governance
+
+### Reissue Invitation
+Reissues an eligible pending, unexpired invitation. The raw token is rotated, only its hash is persisted, and the caller-supplied idempotency key prevents duplicate canonical reissue commits.
+
+### Bulk Invite Members
+Creates invitations deterministically in bounded batches. Each item reports its own `created`, `existing`, or `failed` outcome so a partial batch is never ambiguous.
+
+### Invitation + Initial Access Intent
+An invitation may carry an optional `initialRoleId`. Membership owns and persists that intent through invitation redemption into the Membership. When the Membership becomes active, the activation fact carries the intent so Access can apply the Access-owned role assignment. Membership never owns the Role or Role Assignment.
+

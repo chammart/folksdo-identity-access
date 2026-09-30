@@ -39,3 +39,10 @@ R2 certification uses the real IAM runtime, Engine, MongoDB, NATS/reaction paths
 The release-level gate is `tests/e2e/foundation/iam-r2-effective-access-explanation.e2e.test.ts`. Patch-focused E2E coverage remains in `tests/e2e/access/access-effective-access.e2e.test.ts`.
 
 R2 adds no new canonical state, business events or outbox stream. Certification therefore focuses on read consistency, authorization boundaries and reuse of existing lifecycle reactions.
+
+## R5 certification
+
+The R5 release gate uses real HTTP, Engine, MongoDB and NATS processing to prove the invitation-to-initial-access choreography, independent role cloning, deterministic bulk role assignment/removal, delegated-authority enforcement, and canonical direct-access governance metadata.
+
+Release-level coverage: `tests/e2e/foundation/iam-r5-administration-workflows-release-gate.e2e.test.ts`. Repository `pnpm typecheck` and `pnpm certify` are GREEN for the certified R5 source baseline.
+

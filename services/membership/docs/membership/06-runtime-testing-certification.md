@@ -68,3 +68,10 @@ Membership is ready only when its runtime dependencies required by the assembled
 ## R2 participation
 
 Membership has no new R2 authority or mutation contract. R2 release certification creates and activates the target Membership through the real Membership capability and waits for the existing Membership → Access reaction before evaluating access. Effective Access therefore preserves Membership validity and tenant-context semantics rather than treating Access assignments alone as sufficient authority.
+
+## R5 certification
+
+R5 certification exercises invitation reissue, deterministic bulk invitation outcomes, initial-role intent persistence, Identity invitation acceptance, Membership activation and the resulting Access-owned role assignment through the real IAM HTTP/runtime/event path. The release gate also verifies retry safety and secret-safe invitation responses.
+
+Release-level coverage: `tests/e2e/foundation/iam-r5-administration-workflows-release-gate.e2e.test.ts`.
+

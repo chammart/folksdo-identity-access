@@ -52,3 +52,13 @@ These lifecycle operations are not alternate owners of upstream business state. 
 - Get Access Summary — compact counts derived from Effective Access, including role/direct/restriction/expiring access and privileged-access indicators.
 - Classify Privileged Access — provider-owned permission-ID policy; role privilege is derived from role permissions rather than stored independently.
 - Get Role Access Impact — read-only pre-change impact showing affected Memberships, assignments, permissions and privileged permissions for a role.
+
+## R5 administration workflows & governance
+- Clone Tenant Role — creates an independent Tenant Role with copied permissions and optional descriptive overrides.
+- Bulk Role Assignment / Removal — bounded deterministic administration operations with per-item outcomes.
+- Apply Initial Access — consumes Membership activation intent and delegates creation to the canonical Access role-assignment use case.
+- Direct Access Governance — direct permission assignments may carry human-readable `justification` and `reviewAt` governance metadata.
+- Direct Access Exception Query — lists active direct assignments with governance metadata and derived `current` / `due` review status.
+
+R5 governance metadata is a foundation for administration. It is not the recurring Access Review lifecycle introduced by R6.
+

@@ -49,3 +49,10 @@ Reactions adapt upstream event contracts into existing Access lifecycle use case
 ## R3 Identity lifecycle integration
 
 Identity suspension/reactivation continues through the existing Identity → Membership → Access lifecycle reaction chain. Suspension removes usable authority. Reactivation restores eligibility only; Access does not manufacture grants, assignments, roles, or sessions as a consequence of reactivation.
+
+## R5 initial-access choreography
+
+When `membership.membership.activated` contains `initialRoleId`, the Access reaction delegates to the existing canonical Role Assignment use case. Duplicate assignment is treated as an already-satisfied retry condition; the reaction does not create a second ownership model. Role Assignment state, events and outbox remain Access-owned.
+
+Direct permission-assignment events/outbox payloads carry the persisted R5 governance metadata (`justification`, `reviewAt`) when supplied.
+

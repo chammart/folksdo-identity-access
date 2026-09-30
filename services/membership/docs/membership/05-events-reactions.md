@@ -64,3 +64,10 @@ Membership publishes facts about tenant participation. Identity publishes facts 
 ## R3 Identity lifecycle integration
 
 Identity suspension/reactivation remains Identity-owned. Membership participates only through the established lifecycle reaction contract. Reactivation restores eligibility and must not manufacture Membership state that did not already exist.
+
+## R5 invitation administration events
+
+Membership publishes `membership.invitation.reissued` for a successful canonical reissue. The reissue rotates the raw token while persisting only its hash. Replaying the same accepted idempotency key does not create another canonical reissue event/outbox message.
+
+The established `membership.membership.activated` fact may include the Membership-owned `initialRoleId` coordination intent. Access consumes that fact and remains the sole owner of the resulting Role Assignment.
+

@@ -73,3 +73,15 @@ HTTP pagination query values are parsed from canonical non-negative integer stri
 `GET /access-impact/roles/:roleId` returns read-only pre-change impact for the selected role: affected Membership IDs, assignment IDs, permission IDs, privileged permission IDs and whether the role is privileged. Role privilege is derived from provider-owned privileged-permission classification.
 
 All four reads remain tenant-authorized and fail closed on foreign-tenant targets. Their route permissions are canonical Access administrative permissions.
+
+## R5 administration workflow contracts
+
+| Method | Path | Success | Purpose |
+|---|---|---:|---|
+| POST | `/roles/:roleId/clone` | 201 | Clone an authorized Tenant Role into an independent role |
+| POST | `/role-assignments/bulk` | 200 | Deterministic bounded bulk role assignment |
+| POST | `/role-assignments/bulk-remove` | 200 | Deterministic bounded bulk role-assignment removal |
+| GET | `/direct-access/exceptions` | 200 | List active direct-access exceptions with governance status |
+
+`POST /permission-assignments` additionally accepts optional `justification` and `reviewAt` fields. These values are persisted on canonical Access assignment state and returned through the public assignment contract. Existing delegated-permission enforcement still applies: administration authority does not imply authority to delegate an arbitrary permission.
+

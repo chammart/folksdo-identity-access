@@ -77,3 +77,8 @@ Identity has no new R2 authority or mutation contract. R2 release certification 
 ## R3 certification
 
 R3 is locally certified GREEN using the real IAM HTTP host, Engine, MongoDB, NATS/outbox processing, and Access authorization. The release gate covers the complete provider security-incident journey and verifies that secret material is not exposed by administration reads.
+
+## R5 participation
+
+Identity adds no new R5 ownership boundary. R5 release certification uses the existing public Invitation SignUp and Verify Email lifecycle, including the real Membership-known-invitation projection, to prove the cross-capability path from invitation acceptance to Membership activation and Access-owned initial role assignment.
+
