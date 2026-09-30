@@ -29,11 +29,25 @@ interface ProviderIamPolicyState {
     readonly invitations: { readonly defaultExpiryHours: number; readonly maxExpiryHours: number };
     readonly recovery: { readonly passwordRecoveryEnabled: boolean; readonly recoveryRequestExpiryMinutes: number };
     readonly security: { readonly suspendRevokesSessions: boolean };
+    readonly tenantDelegation: {
+        readonly sessions?: {
+            readonly maxActiveSessions?: { readonly min: number; readonly max: number };
+            readonly sessionLifetimeMinutes?: { readonly min: number; readonly max: number };
+        };
+        readonly invitations?: {
+            readonly defaultExpiryHours?: { readonly min: number; readonly max: number };
+        };
+        readonly recovery?: {
+            readonly recoveryRequestExpiryMinutes?: { readonly min: number; readonly max: number };
+        };
+    };
     readonly createdAt: string;
     readonly updatedAt: string;
     readonly updatedBy: string;
 }
-type PolicyInput = Omit<ProviderIamPolicyState, "policyId" | "version" | "status" | "createdAt" | "updatedAt" | "updatedBy">;
+type PolicyInput = Omit<ProviderIamPolicyState, "policyId" | "version" | "status" | "createdAt" | "updatedAt" | "updatedBy" | "tenantDelegation"> & {
+    readonly tenantDelegation?: ProviderIamPolicyState["tenantDelegation"];
+};
 
 export function registerProviderIamPolicyRoutes(input: {
     readonly app: FastifyInstance;
@@ -59,6 +73,7 @@ export function registerProviderIamPolicyRoutes(input: {
             version: (existing?.version ?? 0) + 1,
             status: "active",
             ...policyInput,
+            tenantDelegation: policyInput.tenantDelegation ?? existing?.tenantDelegation ?? {},
             createdAt: existing?.createdAt ?? now,
             updatedAt: now,
             updatedBy: resolved.context.actor.actorId,
@@ -118,13 +133,14 @@ async function authorize(input: Pick<Parameters<typeof registerProviderIamPolicy
 
 function parsePolicy(value: unknown): PolicyInput {
     const root = object(value, "policy");
-    exact(root, ["authentication", "sessions", "verification", "invitations", "recovery", "security"], "policy");
+    exactOptional(root, ["authentication", "sessions", "verification", "invitations", "recovery", "security"], ["tenantDelegation"], "policy");
     const authentication = object(root.authentication, "authentication"); exact(authentication, ["passwordSignInEnabled"], "authentication");
     const sessions = object(root.sessions, "sessions"); exact(sessions, ["maxActiveSessions", "sessionLifetimeMinutes"], "sessions");
     const verification = object(root.verification, "verification"); exact(verification, ["emailVerificationRequired"], "verification");
     const invitations = object(root.invitations, "invitations"); exact(invitations, ["defaultExpiryHours", "maxExpiryHours"], "invitations");
     const recovery = object(root.recovery, "recovery"); exact(recovery, ["passwordRecoveryEnabled", "recoveryRequestExpiryMinutes"], "recovery");
     const security = object(root.security, "security"); exact(security, ["suspendRevokesSessions"], "security");
+    const tenantDelegation = root.tenantDelegation === undefined ? undefined : parseTenantDelegation(root.tenantDelegation);
     const result: PolicyInput = {
         authentication: { passwordSignInEnabled: bool(authentication.passwordSignInEnabled, "authentication.passwordSignInEnabled") },
         sessions: { maxActiveSessions: integer(sessions.maxActiveSessions, 1, 100, "sessions.maxActiveSessions"), sessionLifetimeMinutes: integer(sessions.sessionLifetimeMinutes, 5, 43200, "sessions.sessionLifetimeMinutes") },
@@ -132,9 +148,55 @@ function parsePolicy(value: unknown): PolicyInput {
         invitations: { defaultExpiryHours: integer(invitations.defaultExpiryHours, 1, 720, "invitations.defaultExpiryHours"), maxExpiryHours: integer(invitations.maxExpiryHours, 1, 2160, "invitations.maxExpiryHours") },
         recovery: { passwordRecoveryEnabled: bool(recovery.passwordRecoveryEnabled, "recovery.passwordRecoveryEnabled"), recoveryRequestExpiryMinutes: integer(recovery.recoveryRequestExpiryMinutes, 5, 1440, "recovery.recoveryRequestExpiryMinutes") },
         security: { suspendRevokesSessions: bool(security.suspendRevokesSessions, "security.suspendRevokesSessions") },
+        ...(tenantDelegation === undefined ? {} : { tenantDelegation }),
     };
     if (result.invitations.defaultExpiryHours > result.invitations.maxExpiryHours) invalid("invitations.defaultExpiryHours must not exceed invitations.maxExpiryHours.");
     return result;
+}
+function parseTenantDelegation(value: unknown): ProviderIamPolicyState["tenantDelegation"] {
+    const root = object(value, "tenantDelegation");
+    exactOptional(root, [], ["sessions", "invitations", "recovery"], "tenantDelegation");
+    const result: {
+        sessions?: ProviderIamPolicyState["tenantDelegation"]["sessions"];
+        invitations?: ProviderIamPolicyState["tenantDelegation"]["invitations"];
+        recovery?: ProviderIamPolicyState["tenantDelegation"]["recovery"];
+    } = {};
+    if (root.sessions !== undefined) {
+        const sessions = object(root.sessions, "tenantDelegation.sessions");
+        exactOptional(sessions, [], ["maxActiveSessions", "sessionLifetimeMinutes"], "tenantDelegation.sessions");
+        result.sessions = {
+            ...(sessions.maxActiveSessions === undefined ? {} : { maxActiveSessions: range(sessions.maxActiveSessions, 1, 100, "tenantDelegation.sessions.maxActiveSessions") }),
+            ...(sessions.sessionLifetimeMinutes === undefined ? {} : { sessionLifetimeMinutes: range(sessions.sessionLifetimeMinutes, 5, 43200, "tenantDelegation.sessions.sessionLifetimeMinutes") }),
+        };
+    }
+    if (root.invitations !== undefined) {
+        const invitations = object(root.invitations, "tenantDelegation.invitations");
+        exactOptional(invitations, [], ["defaultExpiryHours"], "tenantDelegation.invitations");
+        result.invitations = {
+            ...(invitations.defaultExpiryHours === undefined ? {} : { defaultExpiryHours: range(invitations.defaultExpiryHours, 1, 2160, "tenantDelegation.invitations.defaultExpiryHours") }),
+        };
+    }
+    if (root.recovery !== undefined) {
+        const recovery = object(root.recovery, "tenantDelegation.recovery");
+        exactOptional(recovery, [], ["recoveryRequestExpiryMinutes"], "tenantDelegation.recovery");
+        result.recovery = {
+            ...(recovery.recoveryRequestExpiryMinutes === undefined ? {} : { recoveryRequestExpiryMinutes: range(recovery.recoveryRequestExpiryMinutes, 5, 1440, "tenantDelegation.recovery.recoveryRequestExpiryMinutes") }),
+        };
+    }
+    return result;
+}
+function range(value: unknown, min: number, max: number, field: string): { readonly min: number; readonly max: number } {
+    const input = object(value, field); exact(input, ["min", "max"], field);
+    const lower = integer(input.min, min, max, `${field}.min`);
+    const upper = integer(input.max, min, max, `${field}.max`);
+    if (lower > upper) invalid(`${field}.min must not exceed ${field}.max.`);
+    return { min: lower, max: upper };
+}
+function exactOptional(value: Record<string, unknown>, required: readonly string[], optional: readonly string[], path: string): void {
+    const allowed = new Set([...required, ...optional]);
+    const unknown = Object.keys(value).find(key => !allowed.has(key));
+    if (unknown) invalid(`${path}.${unknown} is not a supported Provider IAM business-policy field.`);
+    for (const field of required) if (!(field in value)) invalid(`${path}.${field} is required.`);
 }
 function object(value: unknown, field: string): Record<string, unknown> { if (typeof value !== "object" || value === null || Array.isArray(value)) invalid(`${field} must be an object.`); return value as Record<string, unknown>; }
 function exact(value: Record<string, unknown>, fields: readonly string[], path: string): void { const allowed = new Set(fields); const unknown = Object.keys(value).find(key => !allowed.has(key)); if (unknown) invalid(`${path}.${unknown} is not a supported Provider IAM business-policy field.`); for (const field of fields) if (!(field in value)) invalid(`${path}.${field} is required.`); }

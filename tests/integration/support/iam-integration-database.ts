@@ -52,6 +52,7 @@ export const IAM_SERVICE_COLLECTIONS = [
     "access_known_identities",
     "access_known_subscription_capabilities",
     "iam_provider_policies",
+    "iam_tenant_policies",
     "user",
     "session",
     "account",
