@@ -10,6 +10,11 @@ import { describe, expect, it } from "@jest/globals";
 import { getIamIntegrationRuntime } from "../../integration/support/iam-integration-runtime";
 import { createAccessAdministrativeContext } from "../access/support/access-authenticated-fixtures";
 
+const expectedIamEnvironment =
+    process.env.IAM_ENVIRONMENT?.trim()
+    || process.env.NODE_ENV?.trim()
+    || "development";
+
 describe("IAM R7 Operational Status & Administrative Audit Export", () => {
     it("composes safe Provider operational status", async () => {
         const admin = await createAccessAdministrativeContext();
@@ -20,7 +25,7 @@ describe("IAM R7 Operational Status & Administrative Audit Export", () => {
         });
         expect(response.statusCode).toBe(200);
         expect(response.json()).toMatchObject({
-            service: { id: "folksdo-identity-access-integration", environment: "test", version: "development" },
+            service: { id: "folksdo-identity-access-integration", environment: expectedIamEnvironment, version: "development" },
             release: { releaseId: "local", version: "development" },
             health: { status: "alive" },
             readiness: { status: "ready" },

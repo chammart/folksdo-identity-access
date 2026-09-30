@@ -12,6 +12,11 @@ import { describe, expect, it } from "@jest/globals";
 import { getIamIntegrationRuntime } from "../../integration/support/iam-integration-runtime";
 import { createAccessAdministrativeContext } from "../access/support/access-authenticated-fixtures";
 
+const expectedIamEnvironment =
+    process.env.IAM_ENVIRONMENT?.trim()
+    || process.env.NODE_ENV?.trim()
+    || "development";
+
 describe("IAM R7 Managed Service Operations & Metrics release gate", () => {
     it("certifies Provider operations, Tenant isolation, safe metrics/status and bounded audit export", async () => {
         const admin = await createAccessAdministrativeContext();
@@ -55,7 +60,7 @@ describe("IAM R7 Managed Service Operations & Metrics release gate", () => {
         expect(service.json()).toMatchObject({
             service: {
                 id: "folksdo-identity-access-integration",
-                environment: "test",
+                environment: expectedIamEnvironment,
                 version: "development",
                 capabilities: ["identity", "membership", "access"],
                 runtimeStatus: "ready",
@@ -66,7 +71,7 @@ describe("IAM R7 Managed Service Operations & Metrics release gate", () => {
             },
         });
         expect(release.json()).toMatchObject({
-            releaseId: "local", version: "development", environment: "test",
+            releaseId: "local", version: "development", environment: expectedIamEnvironment,
         });
         expect(ready.json()).toMatchObject({
             status: "ready",
@@ -97,7 +102,7 @@ describe("IAM R7 Managed Service Operations & Metrics release gate", () => {
         });
 
         expect(status.json()).toMatchObject({
-            service: { id: "folksdo-identity-access-integration", environment: "test" },
+            service: { id: "folksdo-identity-access-integration", environment: expectedIamEnvironment },
             release: { releaseId: "local", version: "development" },
             health: { status: "alive" },
             readiness: { status: "ready" },

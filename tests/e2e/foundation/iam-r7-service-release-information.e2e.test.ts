@@ -10,6 +10,11 @@ import { describe, expect, it } from "@jest/globals";
 import { getIamIntegrationRuntime } from "../../integration/support/iam-integration-runtime";
 import { createAccessAdministrativeContext } from "../access/support/access-authenticated-fixtures";
 
+const expectedIamEnvironment =
+    process.env.IAM_ENVIRONMENT?.trim()
+    || process.env.NODE_ENV?.trim()
+    || "development";
+
 describe("IAM R7 Service, Release & Dependency Information", () => {
     it("exposes safe Provider-operational service and release information", async () => {
         const admin = await createAccessAdministrativeContext();
@@ -28,7 +33,7 @@ describe("IAM R7 Service, Release & Dependency Information", () => {
         expect(service.json()).toMatchObject({
             service: {
                 id: "folksdo-identity-access-integration",
-                environment: "test",
+                environment: expectedIamEnvironment,
                 version: "development",
                 capabilities: ["identity", "membership", "access"],
                 runtimeStatus: "ready",
@@ -48,7 +53,7 @@ describe("IAM R7 Service, Release & Dependency Information", () => {
         expect(release.json()).toMatchObject({
             releaseId: "local",
             version: "development",
-            environment: "test",
+            environment: expectedIamEnvironment,
         });
 
         const serialized = JSON.stringify({ service: service.json(), release: release.json() });
