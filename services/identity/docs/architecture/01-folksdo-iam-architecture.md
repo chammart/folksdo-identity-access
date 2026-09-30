@@ -75,19 +75,37 @@ Primary implementation references:
 
 R2 preserves the IAM authority chain. Identity continues to own WHO and Membership continues to own WHERE; Effective Access, Access Explanation, Access Summary, privileged-access classification and Access Impact are Access-owned WHAT reads. Cross-capability administration experiences may compose those reads but must not recompute Access decisions outside Access Service™.
 
-## R6 IAM Policy & Access Reviews
 
-R6 adds governed IAM business configuration and recurring Access governance without changing the core authority chain.
+## R7 managed service operations and metrics
 
-- Provider IAM Policy is IAM-owned cross-capability business policy. It is not Access authorization policy and does not contain secrets, provider credentials, endpoints, or infrastructure configuration.
-- Tenant IAM Settings are canonical tenant-owned overrides only for settings explicitly delegated by Provider policy.
-- Effective policy is derived as Provider Policy → Allowed Tenant Choices → Tenant Settings → Effective Runtime Policy.
-- Provider narrowing takes effect immediately. A stored Tenant override that is no longer permitted does not widen Provider policy; effective resolution falls back to the Provider value.
-- Membership invitation creation consumes only the resolved invitation default TTL. Membership remains authoritative for invitation state, lifecycle, events, and outbox.
-- Access Reviews govern Access-owned role assignments and direct permission assignments. Revoke decisions delegate to existing canonical Access removal/revocation operations.
-- Privileged reviews reuse the R2 provider-owned privileged-access classification.
-- Review decisions persist actor, reason, decision time and completion state; review lifecycle changes emit replayable events/outbox facts.
+R7 completes the backend operational surface required to run Folksdo IAM™ as an independently managed service. These contracts are host-owned administration projections over existing capability and runtime facts; they do not move Identity, Membership or Access authority into a new capability.
 
-R6 release gate:
+### Service and release information
+Provider-authorized operations can identify the running IAM service, environment, version, capabilities, runtime status and immutable release identity through:
 
-> IAM supports continuous access governance and controlled tenant configuration while preserving Provider → Tenant policy boundaries and Identity → Membership → Access authority.
+- `GET /api/v1/admin/iam/service`
+- `GET /api/v1/admin/iam/release`
+
+The response is intentionally infrastructure-safe. Connection strings, credentials, database names, broker subjects and secrets are not exposed.
+
+### Operational metrics
+R7 exposes derived operational intelligence without creating authoritative metrics state:
+
+- `GET /api/v1/admin/iam/metrics`
+- `GET /api/v1/tenants/:tenantId/iam/metrics`
+
+Provider scope is explicit. Tenant scope requires an active Membership in the requested tenant plus Access authorization and cannot cross tenant boundaries. Metrics are derived from canonical IAM state, Engine events and Processing failure records.
+
+### Operational status
+`GET /api/v1/admin/iam/status` composes service identity, release identity, health, readiness, dependency status, Processing state and a bounded safe view of recent projection failures. Raw failure payloads and infrastructure configuration are not returned.
+
+### Administrative audit export
+R7 reuses the existing replayable IAM event authority rather than introducing another audit store:
+
+- `GET /api/v1/admin/iam/audit-export`
+- `GET /api/v1/tenants/:tenantId/iam/audit-export`
+
+Exports support bounded filtering by capability, event type, actor and time range. The maximum result limit is 1000. Export rows contain safe activity facts only; raw event payload and raw metadata are not exported.
+
+### R7 release gate
+The R7 release gate proves the operational contracts through real HTTP, Identity sessions, Membership, Access, Engine and MongoDB. Provider and Tenant authority remain explicit and deny-by-default.

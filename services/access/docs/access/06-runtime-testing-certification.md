@@ -40,25 +40,23 @@ The release-level gate is `tests/e2e/foundation/iam-r2-effective-access-explanat
 
 R2 adds no new canonical state, business events or outbox stream. Certification therefore focuses on read consistency, authorization boundaries and reuse of existing lifecycle reactions.
 
-## R6 certification
 
-R6 certification uses real HTTP, Folksdo Engine™, MongoDB and NATS JetStream with no HTTP mocks. The release gate proves:
+## R7 managed-service certification
 
-- Provider IAM Policy authority.
-- explicit Tenant delegation and out-of-policy rejection.
-- tenant isolation.
-- effective invitation policy applied to real Membership invitation creation.
-- immediate fail-closed behavior when Provider policy narrows beyond a stored Tenant override.
-- general and privileged Access Review creation.
-- confirm/revoke decisions with actor and reason.
-- revocation through existing canonical Access operations.
-- retry-safe decisions and completion.
-- canonical review state, replayable events and outbox.
-- existing Identity → Membership → Access authorization boundaries.
+R7 certification adds the independently managed service operations release gate at:
 
-Repository gate:
+`tests/e2e/foundation/iam-r7-managed-service-operations-release-gate.e2e.test.ts`
 
-```bash
-pnpm typecheck
-pnpm certify
-```
+The gate certifies:
+
+- safe service and release identity;
+- backward-compatible health/readiness plus operational dependency detail;
+- Provider-wide and Tenant-scoped IAM metrics;
+- Tenant isolation and explicit Access authority;
+- composed Provider operational status;
+- bounded Provider and Tenant administrative audit export;
+- audit filtering and the 1000-row maximum;
+- hardened `400 validation_error` behavior for invalid export inputs;
+- absence of raw event payload/metadata and secret-bearing operational fields.
+
+Patch-focused R7 E2E suites remain in the foundation E2E directory. Repository certification remains `pnpm certify`.

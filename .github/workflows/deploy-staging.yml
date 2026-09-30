@@ -175,6 +175,7 @@ jobs:
           VPS_DEPLOY_ROOT: ${{ secrets.VPS_DEPLOY_ROOT }}
           DEPLOY_PATH_SUFFIX: ${{ env.DEPLOY_PATH_SUFFIX }}
           IMAGE_TAG: ${{ needs.validate-build-publish.outputs.image_tag }}
+          SOURCE_REVISION: ${{ github.sha }}
           COMPOSE_PROJECT: ${{ env.COMPOSE_PROJECT_NAME }}
           HEALTH_URL: ${{ env.HEALTH_URL }}
           READY_URL: ${{ env.READY_URL }}
@@ -185,7 +186,7 @@ jobs:
           port: ${{ secrets.VPS_SSH_PORT }}
           command_timeout: 20m
           script_stop: true
-          envs: VPS_DEPLOY_ROOT,DEPLOY_PATH_SUFFIX,IMAGE_TAG,COMPOSE_PROJECT,HEALTH_URL,READY_URL
+          envs: VPS_DEPLOY_ROOT,DEPLOY_PATH_SUFFIX,IMAGE_TAG,SOURCE_REVISION,COMPOSE_PROJECT,HEALTH_URL,READY_URL
           script: |
             set -euo pipefail
             DEPLOY_PATH="${VPS_DEPLOY_ROOT}/${DEPLOY_PATH_SUFFIX}"
@@ -197,6 +198,12 @@ jobs:
               sed -i "s|^FOLKSDO_IAM_IMAGE_TAG=.*|FOLKSDO_IAM_IMAGE_TAG=${IMAGE_TAG}|" .env
             else
               printf '\nFOLKSDO_IAM_IMAGE_TAG=%s\n' "${IMAGE_TAG}" >> .env
+            fi
+
+            if grep -q '^FOLKSDO_IAM_SOURCE_REVISION=' .env; then
+              sed -i "s|^FOLKSDO_IAM_SOURCE_REVISION=.*|FOLKSDO_IAM_SOURCE_REVISION=${SOURCE_REVISION}|" .env
+            else
+              printf 'FOLKSDO_IAM_SOURCE_REVISION=%s\n' "${SOURCE_REVISION}" >> .env
             fi
 
             docker compose --project-name "${COMPOSE_PROJECT}" pull

@@ -26,6 +26,10 @@ import { registerProviderIamInvestigationRoutes } from "./register-provider-iam-
 import { registerProviderIamPolicyRoutes } from "./register-provider-iam-policy-routes";
 import { registerTenantIamPolicyRoutes } from "./register-tenant-iam-policy-routes";
 import { registerAccessReviewRoutes } from "./register-access-review-routes";
+import { registerIamServiceInformationRoutes, resolveIamOperationalReadiness } from "./register-iam-service-information-routes";
+import { registerIamOperationalMetricsRoutes } from "./register-iam-operational-metrics-routes";
+import { registerIamOperationalStatusRoutes } from "./register-iam-operational-status-routes";
+import { registerIamAuditExportRoutes } from "./register-iam-audit-export-routes";
 
 export interface ServerRuntime {
     readonly app: FastifyInstance;
@@ -150,6 +154,49 @@ async function bootstrapServices(input: {
         }),
     });
 
+    registerIamServiceInformationRoutes({
+        app: input.app,
+        config: input.config.serviceInformation,
+        platformRuntime: input.platformRuntime,
+        accessRuntime,
+        accessApi: accessRuntime.components.api,
+        providerSecurityResolver: identityProviderReadSecurityResolver,
+    });
+
+    registerIamOperationalMetricsRoutes({
+        app: input.app,
+        database: input.platformRuntime.mongo.database,
+        membershipApi: membershipRuntime.api,
+        accessApi: accessRuntime.components.api,
+        providerSecurityResolver: identityProviderReadSecurityResolver,
+        tenantContextResolver: createAuthenticatedMembershipContextResolver({
+            engine: input.platformRuntime.engine.engine,
+            identityApi: identityRuntime.api,
+        }),
+    });
+
+    registerIamOperationalStatusRoutes({
+        app: input.app,
+        database: input.platformRuntime.mongo.database,
+        config: input.config.serviceInformation,
+        platformRuntime: input.platformRuntime,
+        accessRuntime,
+        accessApi: accessRuntime.components.api,
+        providerSecurityResolver: identityProviderReadSecurityResolver,
+    });
+
+    registerIamAuditExportRoutes({
+        app: input.app,
+        database: input.platformRuntime.mongo.database,
+        membershipApi: membershipRuntime.api,
+        accessApi: accessRuntime.components.api,
+        providerSecurityResolver: identityProviderReadSecurityResolver,
+        tenantContextResolver: createAuthenticatedMembershipContextResolver({
+            engine: input.platformRuntime.engine.engine,
+            identityApi: identityRuntime.api,
+        }),
+    });
+
     registerTenantPeopleRoutes({
         app: input.app,
         identityApi: identityRuntime.api,
@@ -230,18 +277,18 @@ function registerHealthRoutes(input: {
 }): void {
     input.app.get("/health/live", async () => ({ status: "alive" }));
     input.app.get("/health/ready", async (_request, reply) => {
-        const [platform, access] = await Promise.all([
-            input.platformRuntime.isReady(),
-            input.accessRuntime.validateReadiness(),
-        ]);
-        const ready = platform.ready && access.status === "ready";
-        if (!ready) reply.status(503);
+        const readiness = await resolveIamOperationalReadiness(
+            input.platformRuntime,
+            input.accessRuntime,
+        );
+        if (!readiness.ready) reply.status(503);
         return {
-            status: ready ? "ready" : "not_ready",
+            status: readiness.ready ? "ready" : "not_ready",
             dependencies: {
-                platformRuntime: platform.ready,
-                accessRuntime: access.status === "ready",
+                platformRuntime: readiness.dependencies.platformRuntime.status === "ready",
+                accessRuntime: readiness.dependencies.accessRuntime.status === "ready",
             },
+            operationalDependencies: readiness.dependencies,
         };
     });
 }

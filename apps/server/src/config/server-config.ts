@@ -12,9 +12,19 @@ import type { MembershipServiceConfig } from "@folksdo-identity-access/membershi
 import type { PlatformRuntimeConfig } from "@folksdo-platform/runtime";
 import { createHostPlatformConfig } from "../platform-config";
 
+export interface IamServiceInformationConfig {
+    readonly serviceId: string;
+    readonly environment: string;
+    readonly version: string;
+    readonly releaseId: string;
+    readonly sourceRevision?: string;
+    readonly certifiedAt?: string;
+}
+
 export interface ServerConfig {
     readonly port: number;
     readonly logLevel: "debug" | "info" | "warn" | "error" | "silent";
+    readonly serviceInformation: IamServiceInformationConfig;
     readonly platformRuntime: PlatformRuntimeConfig;
     readonly identity: IdentityServiceConfig;
     readonly membership: MembershipServiceConfig;
@@ -25,6 +35,14 @@ export function loadServerConfig(env: NodeJS.ProcessEnv = process.env): ServerCo
     return {
         port: readPositiveInteger(env.PORT, 3100, "PORT", 65_535),
         logLevel: readLogLevel(env.LOG_LEVEL),
+        serviceInformation: {
+            serviceId: normalize(env.IAM_SERVICE_NAME) ?? "folksdo-identity-access",
+            environment: normalize(env.IAM_ENVIRONMENT) ?? normalize(env.NODE_ENV) ?? "development",
+            version: normalize(env.IAM_RELEASE_VERSION) ?? "development",
+            releaseId: normalize(env.IAM_RELEASE_ID) ?? "local",
+            ...(normalize(env.IAM_SOURCE_REVISION) === undefined ? {} : { sourceRevision: normalize(env.IAM_SOURCE_REVISION) }),
+            ...(normalize(env.IAM_CERTIFIED_AT) === undefined ? {} : { certifiedAt: normalize(env.IAM_CERTIFIED_AT) }),
+        },
         platformRuntime: createHostPlatformConfig(env),
         identity: {
             betterAuthBaseUrl: requiredEnvironment(env, "IAM_BETTER_AUTH_BASE_URL"),
