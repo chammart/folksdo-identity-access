@@ -29,6 +29,7 @@ interface ReviewItem {
 }
 interface ReviewState {
     readonly reviewId: string; readonly tenantId: string; readonly name: string; readonly kind: ReviewKind;
+    readonly version: number;
     readonly status: ReviewStatus; readonly items: readonly ReviewItem[];
     readonly createdBy: string; readonly createdAt: string; readonly updatedAt: string;
     readonly completedAt?: string;
@@ -68,7 +69,7 @@ export function registerAccessReviewRoutes(input: {
         ].filter(item => kind === "access" || item.privileged);
         const now = new Date().toISOString();
         const state: ReviewState = {
-            reviewId: `review_${randomUUID()}`, tenantId, name, kind, status: "open", items,
+            reviewId: `review_${randomUUID()}`, tenantId, name, kind, version: 1, status: "open", items,
             createdBy: context.actor.actorId, createdAt: now, updatedAt: now,
         };
         await commit(input.engine, context, null, state, "access.review.created", "access.review.created",
@@ -105,7 +106,7 @@ export function registerAccessReviewRoutes(input: {
         const now = new Date().toISOString();
         const items = review.items.map((item, itemIndex) => itemIndex === index
             ? { ...item, decision, reason, decidedBy: context.actor.actorId, decidedAt: now } : item);
-        const updated: ReviewState = { ...review, items, updatedAt: now };
+        const updated: ReviewState = { ...review, version: review.version + 1, items, updatedAt: now };
         await commit(input.engine, context, review, updated, "access.review.item_decided", "access.review.item_decided",
             { reviewId: review.reviewId, itemId: current.itemId, assignmentId: current.assignmentId, decision, reason, decidedBy: context.actor.actorId });
         return updated;
@@ -117,7 +118,7 @@ export function registerAccessReviewRoutes(input: {
         if (review.status === "completed") return review;
         if (review.items.some(item => item.decision === undefined)) conflict("All Access review items require a decision before completion.");
         const now = new Date().toISOString();
-        const updated: ReviewState = { ...review, status: "completed", completedAt: now, updatedAt: now };
+        const updated: ReviewState = { ...review, version: review.version + 1, status: "completed", completedAt: now, updatedAt: now };
         await commit(input.engine, context, review, updated, "access.review.completed", "access.review.completed",
             { reviewId: review.reviewId, tenantId: review.tenantId, completedBy: context.actor.actorId, itemCount: review.items.length });
         return updated;
@@ -145,7 +146,7 @@ async function commit(engine: FolksdoEngine, context: AccessApiRequestContext, p
         ? { operation: "insert", collection: COLLECTION, document: record }
         : { operation: "update", collection: COLLECTION, key: { reviewId: state.reviewId }, patch: record };
     const now = state.updatedAt;
-    const event = { eventId: `event_${randomUUID()}`, aggregateType: "access.review", aggregateId: state.reviewId, eventType, version: 1, occurredAt: now, payload, metadata } as ReplayableEvent;
+    const event = { eventId: `event_${randomUUID()}`, aggregateType: "access.review", aggregateId: state.reviewId, eventType, version: state.version, occurredAt: now, payload, metadata } as ReplayableEvent;
     const outbox = { messageId: `outbox_${randomUUID()}`, subject, occurredAt: now, payload, metadata } as OutboxMessage;
     const runtimeContext: RuntimeContext = {
         requestId: context.requestId,

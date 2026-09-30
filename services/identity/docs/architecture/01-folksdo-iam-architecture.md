@@ -74,3 +74,20 @@ Primary implementation references:
 ## R2 access intelligence
 
 R2 preserves the IAM authority chain. Identity continues to own WHO and Membership continues to own WHERE; Effective Access, Access Explanation, Access Summary, privileged-access classification and Access Impact are Access-owned WHAT reads. Cross-capability administration experiences may compose those reads but must not recompute Access decisions outside Access Service™.
+
+## R6 IAM Policy & Access Reviews
+
+R6 adds governed IAM business configuration and recurring Access governance without changing the core authority chain.
+
+- Provider IAM Policy is IAM-owned cross-capability business policy. It is not Access authorization policy and does not contain secrets, provider credentials, endpoints, or infrastructure configuration.
+- Tenant IAM Settings are canonical tenant-owned overrides only for settings explicitly delegated by Provider policy.
+- Effective policy is derived as Provider Policy → Allowed Tenant Choices → Tenant Settings → Effective Runtime Policy.
+- Provider narrowing takes effect immediately. A stored Tenant override that is no longer permitted does not widen Provider policy; effective resolution falls back to the Provider value.
+- Membership invitation creation consumes only the resolved invitation default TTL. Membership remains authoritative for invitation state, lifecycle, events, and outbox.
+- Access Reviews govern Access-owned role assignments and direct permission assignments. Revoke decisions delegate to existing canonical Access removal/revocation operations.
+- Privileged reviews reuse the R2 provider-owned privileged-access classification.
+- Review decisions persist actor, reason, decision time and completion state; review lifecycle changes emit replayable events/outbox facts.
+
+R6 release gate:
+
+> IAM supports continuous access governance and controlled tenant configuration while preserving Provider → Tenant policy boundaries and Identity → Membership → Access authority.

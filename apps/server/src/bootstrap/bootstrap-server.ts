@@ -116,6 +116,11 @@ async function bootstrapServices(input: {
             identityApi: identityRuntime.api,
         }),
         accessAuthorizer: membershipAccessAuthorizer,
+        resolveInvitationDefaultTtlMilliseconds: async tenantId =>
+            resolveInvitationDefaultTtlMilliseconds(
+                input.platformRuntime.mongo.database,
+                tenantId,
+            ),
     });
     membershipApi = membershipRuntime.api;
 
@@ -331,4 +336,33 @@ async function closeFastifyApp(app: FastifyInstance): Promise<void> {
     } catch (error) {
         if (!(error instanceof Error) || !error.message.includes("not started")) throw error;
     }
+}
+
+
+async function resolveInvitationDefaultTtlMilliseconds(
+    database: import("mongodb").Db,
+    tenantId: string,
+): Promise<number | undefined> {
+    const provider = await database.collection<{
+        version: number;
+        invitations: { defaultExpiryHours: number; maxExpiryHours: number };
+        tenantDelegation?: { invitations?: { defaultExpiryHours?: { min: number; max: number } } };
+    }>("iam_provider_policies").findOne({ policyId: "provider-default" });
+    if (provider === null) return undefined;
+
+    const tenant = await database.collection<{
+        overrides?: { invitations?: { defaultExpiryHours?: number } };
+    }>("iam_tenant_policies").findOne({ tenantId });
+    const override = tenant?.overrides?.invitations?.defaultExpiryHours;
+    const delegated = provider.tenantDelegation?.invitations?.defaultExpiryHours;
+    const effectiveHours =
+        override !== undefined
+        && delegated !== undefined
+        && override >= delegated.min
+        && override <= delegated.max
+        && override <= provider.invitations.maxExpiryHours
+            ? override
+            : provider.invitations.defaultExpiryHours;
+
+    return effectiveHours * 60 * 60 * 1000;
 }

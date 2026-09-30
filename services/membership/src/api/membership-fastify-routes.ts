@@ -56,6 +56,11 @@ export interface RegisterMembershipRoutesInput {
     readonly membershipApi: MembershipApi;
     readonly contextResolver: MembershipRouteContextResolver;
     readonly providerReadSecurityResolver: MembershipProviderReadSecurityResolver;
+    /**
+     * Host-composed IAM business policy. Membership remains authoritative for
+     * invitation state while the host may govern the default invitation TTL.
+     */
+    readonly resolveInvitationDefaultTtlMilliseconds?: (tenantId: string) => Promise<number | undefined>;
 }
 
 // -----------------------------------------------------------------------------
@@ -165,8 +170,15 @@ async function registerInviteMemberRoute(
                             request.body,
                         );
 
+                    const governedDefaultTtl =
+                        body.expiresInMilliseconds === undefined
+                            ? await input.resolveInvitationDefaultTtlMilliseconds?.(body.tenantId)
+                            : undefined;
+
                     return input.membershipApi.inviteMember(
-                        body,
+                        governedDefaultTtl === undefined
+                            ? body
+                            : { ...body, expiresInMilliseconds: governedDefaultTtl },
                         context,
                     );
                 },

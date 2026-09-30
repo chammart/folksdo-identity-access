@@ -120,6 +120,9 @@ export interface BootstrapMembershipServiceInput {
      */
     readonly accessAuthorizer:
     MembershipAccessAuthorizer;
+
+    readonly resolveInvitationDefaultTtlMilliseconds?:
+    (tenantId: string) => Promise<number | undefined>;
 }
 
 // -----------------------------------------------------------------------------
@@ -211,6 +214,9 @@ export async function bootstrapMembershipService(
                 input.contextResolver,
                 runtime,
             ),
+
+        resolveInvitationDefaultTtlMilliseconds:
+            input.resolveInvitationDefaultTtlMilliseconds,
     });
 
     return runtime;

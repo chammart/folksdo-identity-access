@@ -57,12 +57,12 @@ Request bodies, route parameters, and query values are validated at the HTTP bou
 
 This document describes the human-readable HTTP surface. DTO source files remain the executable schema authority. Changes to routes, DTOs, status codes, or error contracts require corresponding API-contract and acceptance updates.
 
-## R5 invitation administration
+## R6 effective invitation policy
 
-| Method | Route | Purpose |
-|---|---|---|
-| POST | `/api/v1/membership/invitations/:invitationId/reissue` | Reissue an eligible invitation with idempotency protection |
-| POST | `/api/v1/membership/invitations/bulk` | Create a bounded deterministic batch of invitations |
+Invitation creation remains a Membership-owned operation. When the IAM host resolves an effective invitation policy for the target tenant, `POST /api/v1/membership/invitations` uses the effective `invitations.defaultExpiryHours` value when the caller does not provide an explicit expiry.
 
-Invitation creation and bulk items may include optional `initialRoleId`. Reissue accepts an `idempotencyKey` and optional expiration override. Public invitation responses never expose the persisted invitation-token hash.
+The policy boundary is host-composed:
 
+**Provider IAM Policy → delegated Tenant IAM Settings → effective invitation TTL → Membership invitation creation**
+
+Membership does not read IAM policy collections and does not become the owner of Provider or Tenant policy. Its canonical invitation state, lifecycle, events and outbox remain unchanged in ownership.

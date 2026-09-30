@@ -110,10 +110,7 @@ export function registerTenantIamPolicyRoutes(input: {
             await authorize(input, request, reply, "view");
             const provider = await providerPolicy(input.database);
             const tenant = await input.database.collection<TenantPolicyState>(TENANT_COLLECTION).findOne({ tenantId: request.params.tenantId });
-            const overrides = tenant?.overrides ?? {};
-            // Revalidate stored overrides against current Provider policy. Provider
-            // policy changes therefore narrow effective behavior immediately.
-            assertWithinDelegation(overrides, provider);
+            const overrides = effectiveOverrides(tenant?.overrides ?? {}, provider);
             return {
                 tenantId: request.params.tenantId,
                 providerPolicyVersion: provider.version,
@@ -181,6 +178,27 @@ function parseOverrides(value: unknown): TenantOverrides {
     }
     return result;
 }
+function effectiveOverrides(overrides: TenantOverrides, provider: ProviderPolicy): TenantOverrides {
+    const delegation = provider.tenantDelegation ?? {};
+    const within = (value: number | undefined, allowed: Range | undefined) =>
+        value !== undefined && allowed !== undefined && value >= allowed.min && value <= allowed.max;
+    return {
+        ...(within(overrides.sessions?.maxActiveSessions, delegation.sessions?.maxActiveSessions)
+            ? { sessions: { maxActiveSessions: overrides.sessions!.maxActiveSessions } } : {}),
+        ...(within(overrides.sessions?.sessionLifetimeMinutes, delegation.sessions?.sessionLifetimeMinutes)
+            ? { sessions: {
+                ...(within(overrides.sessions?.maxActiveSessions, delegation.sessions?.maxActiveSessions)
+                    ? { maxActiveSessions: overrides.sessions!.maxActiveSessions } : {}),
+                sessionLifetimeMinutes: overrides.sessions!.sessionLifetimeMinutes,
+            } } : {}),
+        ...(within(overrides.invitations?.defaultExpiryHours, delegation.invitations?.defaultExpiryHours)
+            && overrides.invitations!.defaultExpiryHours! <= provider.invitations.maxExpiryHours
+            ? { invitations: { defaultExpiryHours: overrides.invitations!.defaultExpiryHours } } : {}),
+        ...(within(overrides.recovery?.recoveryRequestExpiryMinutes, delegation.recovery?.recoveryRequestExpiryMinutes)
+            ? { recovery: { recoveryRequestExpiryMinutes: overrides.recovery!.recoveryRequestExpiryMinutes } } : {}),
+    };
+}
+
 function assertWithinDelegation(overrides: TenantOverrides, provider: ProviderPolicy): void {
     const delegation = provider.tenantDelegation ?? {};
     check(overrides.sessions?.maxActiveSessions, delegation.sessions?.maxActiveSessions, "sessions.maxActiveSessions");

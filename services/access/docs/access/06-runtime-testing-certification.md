@@ -40,9 +40,25 @@ The release-level gate is `tests/e2e/foundation/iam-r2-effective-access-explanat
 
 R2 adds no new canonical state, business events or outbox stream. Certification therefore focuses on read consistency, authorization boundaries and reuse of existing lifecycle reactions.
 
-## R5 certification
+## R6 certification
 
-The R5 release gate uses real HTTP, Engine, MongoDB and NATS processing to prove the invitation-to-initial-access choreography, independent role cloning, deterministic bulk role assignment/removal, delegated-authority enforcement, and canonical direct-access governance metadata.
+R6 certification uses real HTTP, Folksdo Engine™, MongoDB and NATS JetStream with no HTTP mocks. The release gate proves:
 
-Release-level coverage: `tests/e2e/foundation/iam-r5-administration-workflows-release-gate.e2e.test.ts`. Repository `pnpm typecheck` and `pnpm certify` are GREEN for the certified R5 source baseline.
+- Provider IAM Policy authority.
+- explicit Tenant delegation and out-of-policy rejection.
+- tenant isolation.
+- effective invitation policy applied to real Membership invitation creation.
+- immediate fail-closed behavior when Provider policy narrows beyond a stored Tenant override.
+- general and privileged Access Review creation.
+- confirm/revoke decisions with actor and reason.
+- revocation through existing canonical Access operations.
+- retry-safe decisions and completion.
+- canonical review state, replayable events and outbox.
+- existing Identity → Membership → Access authorization boundaries.
 
+Repository gate:
+
+```bash
+pnpm typecheck
+pnpm certify
+```
