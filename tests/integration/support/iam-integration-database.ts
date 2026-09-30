@@ -47,6 +47,7 @@ export const IAM_SERVICE_COLLECTIONS = [
     "access_permission_assignments",
     "access_authorization_policies",
     "access_restrictions",
+    "access_reviews",
     "access_known_memberships",
     "access_known_tenants",
     "access_known_identities",

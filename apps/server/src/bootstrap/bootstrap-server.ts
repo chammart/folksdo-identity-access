@@ -25,6 +25,7 @@ import { registerProviderIamActivityRoutes } from "./register-provider-iam-activ
 import { registerProviderIamInvestigationRoutes } from "./register-provider-iam-investigation-routes";
 import { registerProviderIamPolicyRoutes } from "./register-provider-iam-policy-routes";
 import { registerTenantIamPolicyRoutes } from "./register-tenant-iam-policy-routes";
+import { registerAccessReviewRoutes } from "./register-access-review-routes";
 
 export interface ServerRuntime {
     readonly app: FastifyInstance;
@@ -131,6 +132,18 @@ async function bootstrapServices(input: {
 
     membershipAccessAuthorizer.bind(accessRuntime.components.api);
     identityAccessAuthorizer.bind(accessRuntime.components.api);
+
+    registerAccessReviewRoutes({
+        app: input.app,
+        database: input.platformRuntime.mongo.database,
+        engine: input.platformRuntime.engine.engine,
+        accessApi: accessRuntime.components.api,
+        contextResolver: createAuthenticatedAccessContextResolver({
+            engine: input.platformRuntime.engine.engine,
+            identityApi: identityRuntime.api,
+            membershipApi: membershipRuntime.api,
+        }),
+    });
 
     registerTenantPeopleRoutes({
         app: input.app,

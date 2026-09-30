@@ -252,6 +252,34 @@ export const ACCESS_ADMINISTRATIVE_PERMISSIONS = {
         ),
 
     // -------------------------------------------------------------------------
+    // ACCESS REVIEWS
+    // -------------------------------------------------------------------------
+
+    reviewCreate:
+        defineAccessAdministrativePermission(
+            "review",
+            "create",
+        ),
+
+    reviewView:
+        defineAccessAdministrativePermission(
+            "review",
+            "view",
+        ),
+
+    reviewDecide:
+        defineAccessAdministrativePermission(
+            "review",
+            "decide",
+        ),
+
+    reviewComplete:
+        defineAccessAdministrativePermission(
+            "review",
+            "complete",
+        ),
+
+    // -------------------------------------------------------------------------
     // ACCESS RESTRICTIONS
     // -------------------------------------------------------------------------
 
