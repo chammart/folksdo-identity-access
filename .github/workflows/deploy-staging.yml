@@ -188,12 +188,19 @@ jobs:
           script_stop: true
           envs: VPS_DEPLOY_ROOT,DEPLOY_PATH_SUFFIX,IMAGE_TAG,SOURCE_REVISION,COMPOSE_PROJECT,HEALTH_URL,READY_URL
           script: |
-            set -euo pipefail
+            set -Eeuo pipefail
+            trap 'status=$?; echo "DEPLOY FAILED (exit ${status}) at line ${LINENO}: ${BASH_COMMAND}" >&2; docker compose --project-name "${COMPOSE_PROJECT}" ps 2>/dev/null || true; docker compose --project-name "${COMPOSE_PROJECT}" logs --tail=100 api 2>/dev/null || true; exit "${status}"' ERR
+
             DEPLOY_PATH="${VPS_DEPLOY_ROOT}/${DEPLOY_PATH_SUFFIX}"
+            echo "Deploying ${IMAGE_TAG} to ${DEPLOY_PATH}"
+
+            test -d "${DEPLOY_PATH}"
             cd "${DEPLOY_PATH}"
             test -f .env
+            test -f docker-compose.staging.yml
             mv -f docker-compose.staging.yml docker-compose.yml
 
+            echo "Updating immutable deployment identity"
             if grep -q '^FOLKSDO_IAM_IMAGE_TAG=' .env; then
               sed -i "s|^FOLKSDO_IAM_IMAGE_TAG=.*|FOLKSDO_IAM_IMAGE_TAG=${IMAGE_TAG}|" .env
             else
@@ -206,9 +213,16 @@ jobs:
               printf 'FOLKSDO_IAM_SOURCE_REVISION=%s\n' "${SOURCE_REVISION}" >> .env
             fi
 
+            echo "Validating staging Compose definition"
+            docker compose --project-name "${COMPOSE_PROJECT}" config --quiet
+
+            echo "Pulling immutable IAM image ${IMAGE_TAG}"
             docker compose --project-name "${COMPOSE_PROJECT}" pull
+
+            echo "Starting staging services"
             docker compose --project-name "${COMPOSE_PROJECT}" up -d --remove-orphans
 
+            echo "Waiting for IAM health/readiness"
             for URL in "${HEALTH_URL}" "${READY_URL}"; do
               passed=false
               for attempt in $(seq 1 30); do
