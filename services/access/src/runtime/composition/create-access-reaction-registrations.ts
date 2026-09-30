@@ -281,6 +281,31 @@ export function createAccessReactionRegistrations(
                             };
                         },
                     },
+
+                    applyInitialRole: {
+                        async execute(request) {
+                            try {
+                                await useCases.roles.assign.execute({
+                                    membershipId: request.membershipId,
+                                    tenantId: request.tenantId,
+                                    roleId: request.roleId,
+                                    assignedBy: request.assignedBy,
+                                });
+                            } catch (error) {
+                                // Access assignment creation is retry-safe:
+                                // an already-existing active/pending assignment
+                                // means the initial-access intent is satisfied.
+                                if (
+                                    error instanceof Error
+                                    && "code" in error
+                                    && error.code === "role_assignment_already_exists"
+                                ) {
+                                    return;
+                                }
+                                throw error;
+                            }
+                        },
+                    },
                 }),
         },
 

@@ -21,6 +21,7 @@ import type {
 
 import {
     registerAccessRoutes,
+    registerAccessGovernanceRoutes,
     type AccessApi,
     type AccessApiRequestContextResolver,
     type AccessApiValidation,
@@ -63,8 +64,8 @@ export function composeAccessRoutes(
         register:
             async (
                 server,
-            ) =>
-                registerAccessRoutes(
+            ) => {
+                await registerAccessRoutes(
                     server,
                     {
                         api:
@@ -76,6 +77,13 @@ export function composeAccessRoutes(
                         validation:
                             input.validation,
                     },
-                ),
+                );
+
+                await registerAccessGovernanceRoutes({
+                    server,
+                    api: input.api,
+                    contextResolver: input.contextResolver,
+                });
+            },
     };
 }

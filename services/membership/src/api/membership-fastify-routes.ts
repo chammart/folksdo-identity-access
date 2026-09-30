@@ -37,11 +37,13 @@ import type {
 } from "./membership-route-context";
 
 import {
+    parseBulkInviteMembersRequest,
     parseCreateMembershipRequest,
     parseInviteMemberRequest,
     parseListMembershipsForProviderRequest,
     parseReasonRequest,
     parseRedeemInvitationRequest,
+    parseResendInvitationRequest,
     parseSwitchMembershipContextRequest,
 } from "./membership-route-validation";
 
@@ -66,6 +68,8 @@ export async function registerMembershipRoutes(
     await registerCreateMembershipRoute(input);
 
     await registerInviteMemberRoute(input);
+    await registerBulkInviteMembersRoute(input);
+    await registerReissueInvitationRoute(input);
     await registerRedeemInvitationRoute(input);
     await registerRevokeInvitationRoute(input);
     await registerExpireInvitationRoute(input);
@@ -168,6 +172,50 @@ async function registerInviteMemberRoute(
                 },
             });
         },
+    );
+}
+
+async function registerBulkInviteMembersRoute(
+    input: RegisterMembershipRoutesInput,
+): Promise<void> {
+    input.app.post(
+        "/api/v1/membership/invitations/bulk",
+        async (request, reply) => executeMembershipRoute({
+            request,
+            reply,
+            route: "membership.bulk-invite-members",
+            failureMessage: "Bulk Membership invitation creation failed.",
+            statusCode: 200,
+            execute: async () => {
+                const context = await input.contextResolver.resolve({ request, reply });
+                return input.membershipApi.bulkInviteMembers(
+                    parseBulkInviteMembersRequest(request.body),
+                    context,
+                );
+            },
+        }),
+    );
+}
+
+async function registerReissueInvitationRoute(
+    input: RegisterMembershipRoutesInput,
+): Promise<void> {
+    input.app.post<{ Params: InvitationIdParams }>(
+        "/api/v1/membership/invitations/:invitationId/reissue",
+        async (request, reply) => executeMembershipRoute({
+            request,
+            reply,
+            route: "membership.reissue-invitation",
+            failureMessage: "Membership invitation reissue failed.",
+            execute: async () => {
+                const context = await input.contextResolver.resolve({ request, reply });
+                return input.membershipApi.reissueInvitation(
+                    request.params.invitationId,
+                    parseResendInvitationRequest(request.body),
+                    context,
+                );
+            },
+        }),
     );
 }
 

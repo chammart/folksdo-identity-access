@@ -208,6 +208,17 @@ export const createRoleRoute = {
         false,
 } as const satisfies AccessRouteDefinition<"createRole">;
 
+export const cloneRoleRoute = {
+    routeId: "access.role.clone",
+    method: "POST",
+    path: "/roles/:roleId/clone",
+    operation: "cloneRole",
+    successStatusCode: 201,
+    hasBody: true,
+    hasQuery: false,
+    hasParameters: true,
+} as const satisfies AccessRouteDefinition<"cloneRole">;
+
 export const getRoleRoute = {
     routeId:
         "access.role.get",
@@ -779,6 +790,7 @@ export const accessPermissionRoutes = [
 
 export const accessRoleRoutes = [
     createRoleRoute,
+    cloneRoleRoute,
     getRoleRoute,
     listRolesRoute,
     updateRoleRoute,

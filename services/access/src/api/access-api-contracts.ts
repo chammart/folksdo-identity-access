@@ -33,6 +33,7 @@ import type {
     ApiCreatePolicyRequest,
     ApiCreateRestrictionRequest,
     ApiCreateRoleRequest,
+    ApiCloneRoleRequest,
     ApiGrantPermissionRequest,
     ListPermissionAssignmentsQuery,
     ListPermissionsQuery,
@@ -252,6 +253,12 @@ export interface AccessPermissionApi {
 export interface AccessRoleApi {
     createRole(
         request: ApiCreateRoleRequest,
+        context: AccessApiRequestContext,
+    ): Promise<RoleDto>;
+
+    cloneRole(
+        roleId: string,
+        request: ApiCloneRoleRequest,
         context: AccessApiRequestContext,
     ): Promise<RoleDto>;
 

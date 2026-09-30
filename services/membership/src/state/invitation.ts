@@ -66,6 +66,14 @@ export interface InvitationState {
     readonly membershipType: MembershipType;
 
     /**
+     * Access-owned Role reference requested for the resulting Membership.
+     *
+     * Membership owns only the invitation intent. Access validates and owns
+     * the canonical Role assignment after Membership activation.
+     */
+    readonly initialRoleId?: string;
+
+    /**
      * Current invitation lifecycle state.
      */
     readonly status: InvitationStatus;
@@ -79,6 +87,16 @@ export interface InvitationState {
      * Identity that created the invitation.
      */
     readonly invitedBy: string;
+
+    /**
+     * Last accepted resend/reissue idempotency key.
+     */
+    readonly lastReissueIdempotencyKey?: string;
+
+    /**
+     * Timestamp of the most recent resend/reissue.
+     */
+    readonly lastReissuedAt?: string;
 
     /**
      * Identity that redeemed the invitation.

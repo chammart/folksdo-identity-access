@@ -63,6 +63,10 @@ export interface GrantPermissionRequest {
 
     readonly assignedBy: string;
 
+    readonly justification?: string;
+
+    readonly reviewAt?: string;
+
     readonly effectiveFrom?: string;
 
     readonly expiresAt?: string;
@@ -135,7 +139,7 @@ export class GrantPermissionUseCase {
         const now =
             this.dependencies.clock.now();
 
-        const assignment =
+        const baseAssignment =
             grantPermission({
                 assignmentId:
                     this.dependencies.ids.assignmentId(),
@@ -168,6 +172,12 @@ export class GrantPermissionUseCase {
 
                 now,
             });
+
+        const assignment = {
+            ...baseAssignment,
+            justification: request.justification,
+            reviewAt: request.reviewAt,
+        };
 
         await commitAccess(
             this.dependencies.engine,
@@ -234,6 +244,12 @@ export class GrantPermissionUseCase {
                             assignedBy:
                                 assignment.assignedBy,
 
+                            justification:
+                                assignment.justification,
+
+                            reviewAt:
+                                assignment.reviewAt,
+
                             effectiveFrom:
                                 assignment.effectiveFrom,
 
@@ -281,6 +297,12 @@ export class GrantPermissionUseCase {
 
                             assignedBy:
                                 assignment.assignedBy,
+
+                            justification:
+                                assignment.justification,
+
+                            reviewAt:
+                                assignment.reviewAt,
 
                             effectiveFrom:
                                 assignment.effectiveFrom,

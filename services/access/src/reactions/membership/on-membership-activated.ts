@@ -57,6 +57,8 @@ export interface MembershipActivatedPayload {
     readonly identityId: string;
 
     readonly tenantId: string;
+
+    readonly initialRoleId?: string;
 }
 
 // -----------------------------------------------------------------------------
@@ -101,9 +103,23 @@ export interface ActivateMembershipAuthorizationOperation {
 // REACTION DEPENDENCIES
 // -----------------------------------------------------------------------------
 
+export interface ApplyInitialRoleRequest {
+    readonly membershipId: string;
+    readonly tenantId: string;
+    readonly roleId: string;
+    readonly assignedBy: string;
+}
+
+export interface ApplyInitialRoleOperation {
+    execute(request: ApplyInitialRoleRequest): Promise<void>;
+}
+
 export interface CreateOnMembershipActivatedReactionInput {
     readonly activateMembershipAuthorization:
     ActivateMembershipAuthorizationOperation;
+
+    readonly applyInitialRole:
+    ApplyInitialRoleOperation;
 }
 
 // -----------------------------------------------------------------------------
@@ -115,6 +131,7 @@ export function createOnMembershipActivatedReaction(
 ): AccessReactionHandler<MembershipActivatedPayload> {
     const {
         activateMembershipAuthorization,
+        applyInitialRole,
     } = input;
 
     return {
@@ -154,6 +171,11 @@ export function createOnMembershipActivatedReaction(
                     "tenantId",
                 );
 
+            const initialRoleId =
+                typeof payload.initialRoleId === "string"
+                    ? payload.initialRoleId
+                    : undefined;
+
             const result =
                 await activateMembershipAuthorization.execute({
                     membershipId,
@@ -171,9 +193,19 @@ export function createOnMembershipActivatedReaction(
                         ),
                 });
 
+            if (initialRoleId !== undefined) {
+                await applyInitialRole.execute({
+                    membershipId,
+                    tenantId,
+                    roleId: initialRoleId,
+                    assignedBy: "system:membership-initial-access",
+                });
+            }
+
             return accessReactionProcessed(
                 result.knownFactChanged
-                || result.affectedAssignmentCount > 0,
+                || result.affectedAssignmentCount > 0
+                || initialRoleId !== undefined,
             );
         },
     };

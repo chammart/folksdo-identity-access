@@ -28,6 +28,7 @@ export * from "./access-summary-dto";
 // Command request DTOs
 export * from "./create-permission-request";
 export * from "./create-role-request";
+export * from "./clone-role-request";
 export * from "./update-role-request";
 export * from "./archive-role-request";
 export * from "./restore-role-request";

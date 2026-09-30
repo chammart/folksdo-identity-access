@@ -33,6 +33,8 @@ export const membershipPermissions = {
     readInvitation: "membership.invitation.view",
     listInvitations: "membership.invitation.list",
     revokeInvitation: "membership.invitation.revoke",
+    reissueInvitation: "membership.invitation.reissue",
+    bulkInvite: "membership.invitation.bulk-invite",
     expireInvitation: "membership.invitation.expire",
 
     viewContext: "membership.context.view",

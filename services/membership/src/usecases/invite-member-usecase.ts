@@ -152,6 +152,9 @@ export function createInviteMemberUseCase(
                 membershipType:
                     input.membershipType,
 
+                initialRoleId:
+                    input.initialRoleId,
+
                 status:
                     "pending",
 
@@ -193,6 +196,9 @@ export function createInviteMemberUseCase(
                 membershipType:
                     invitation.membershipType,
 
+                initialRoleId:
+                    invitation.initialRoleId,
+
                 status:
                     invitation.status,
 
@@ -233,6 +239,9 @@ export function createInviteMemberUseCase(
 
                         membershipType:
                             invitation.membershipType,
+
+                        initialRoleId:
+                            invitation.initialRoleId,
 
                         status:
                             invitation.status,

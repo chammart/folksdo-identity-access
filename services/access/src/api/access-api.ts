@@ -87,6 +87,9 @@ export interface CreateAccessApiDependencies {
     readonly createRole:
     AccessApiOperation<"createRole">;
 
+    readonly cloneRole:
+    AccessApiOperation<"cloneRole">;
+
     readonly updateRole:
     AccessApiOperation<"updateRole">;
 
@@ -237,6 +240,17 @@ export function createAccessApi(
             context,
         ) =>
             dependencies.createRole(
+                request,
+                context,
+            ),
+
+        cloneRole: (
+            roleId,
+            request,
+            context,
+        ) =>
+            dependencies.cloneRole(
+                roleId,
                 request,
                 context,
             ),

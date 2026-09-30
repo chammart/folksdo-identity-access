@@ -22,10 +22,12 @@ import {
 
 import type {
     ArchiveMembershipRequest,
+    BulkInviteMembersRequest,
     CreateMembershipRequest,
     InviteMemberRequest,
     ListMembershipsForProviderRequest,
     RedeemInvitationRequest,
+    ResendInvitationRequest,
     SuspendMembershipRequest,
     SwitchMembershipContextRequest,
 } from "./membership-dtos";
@@ -104,6 +106,9 @@ const inviteMemberRequestSchema =
         membershipType:
             membershipTypeSchema,
 
+        initialRoleId:
+            identifierSchema.optional(),
+
         expiresInMilliseconds:
             z.number()
                 .int()
@@ -111,6 +116,29 @@ const inviteMemberRequestSchema =
                 .optional(),
     })
         .strict();
+
+const resendInvitationRequestSchema =
+    z.object({
+        idempotencyKey:
+            identifierSchema.max(200),
+        expiresInMilliseconds:
+            z.number().int().positive().optional(),
+    }).strict();
+
+const bulkInviteMembersRequestSchema =
+    z.object({
+        tenantId:
+            identifierSchema,
+        items:
+            z.array(
+                z.object({
+                    invitedEmail: emailSchema,
+                    membershipType: membershipTypeSchema,
+                    initialRoleId: identifierSchema.optional(),
+                    expiresInMilliseconds: z.number().int().positive().optional(),
+                }).strict(),
+            ).min(1).max(100),
+    }).strict();
 
 const redeemInvitationRequestSchema =
     z.object({
@@ -250,6 +278,18 @@ export function parseInviteMemberRequest(
     return inviteMemberRequestSchema.parse(
         value,
     ) as InviteMemberRequest;
+}
+
+export function parseResendInvitationRequest(
+    value: unknown,
+): ResendInvitationRequest {
+    return resendInvitationRequestSchema.parse(value) as ResendInvitationRequest;
+}
+
+export function parseBulkInviteMembersRequest(
+    value: unknown,
+): BulkInviteMembersRequest {
+    return bulkInviteMembersRequestSchema.parse(value) as BulkInviteMembersRequest;
 }
 
 // -----------------------------------------------------------------------------

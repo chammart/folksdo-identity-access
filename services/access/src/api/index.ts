@@ -41,3 +41,4 @@ export * from "./access-route-permissions";
 export * from "./access-http-errors";
 export * from "./access-routes";
 export * from "./register-access-routes";
+export * from "./register-access-governance-routes";

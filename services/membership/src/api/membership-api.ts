@@ -27,6 +27,7 @@ import type {
 
 import type {
     ArchiveMembershipRequest,
+    BulkInviteMembersRequest,
     CreateMembershipRequest,
     InvitationResult,
     InviteMemberRequest,
@@ -34,6 +35,7 @@ import type {
     MembershipContextResult,
     MembershipResult,
     RedeemInvitationRequest,
+    ResendInvitationRequest,
     SuspendMembershipRequest,
     SwitchMembershipContextRequest,
 } from "./membership-dtos";
@@ -53,6 +55,12 @@ export interface IssuedInvitationResult
     readonly invitationToken?: string;
 }
 
+export interface ReissuedInvitationResult
+    extends InvitationResult {
+    readonly invitationToken?: string;
+    readonly reissued: boolean;
+}
+
 /**
  * Result returned after an invitation has been redeemed successfully.
  */
@@ -60,6 +68,23 @@ export interface RedeemedInvitationResult {
     readonly invitation: InvitationResult;
     readonly membership: MembershipResult;
 }
+
+export interface BulkInvitationItemResult {
+    readonly index: number;
+    readonly invitedEmail: string;
+    readonly outcome: "created" | "existing" | "failed";
+    readonly invitation?: IssuedInvitationResult;
+    readonly error?: {
+        readonly code: string;
+        readonly message: string;
+    };
+}
+
+export interface BulkInvitationResult {
+    readonly tenantId: string;
+    readonly items: readonly BulkInvitationItemResult[];
+}
+
 
 export interface ProviderMembershipListResponse {
     readonly items: readonly MembershipResult[];
@@ -112,6 +137,17 @@ export interface MembershipApi {
         input: InviteMemberRequest,
         context: RuntimeContext,
     ): Promise<IssuedInvitationResult>;
+
+    reissueInvitation(
+        invitationId: string,
+        input: ResendInvitationRequest,
+        context: RuntimeContext,
+    ): Promise<ReissuedInvitationResult>;
+
+    bulkInviteMembers(
+        input: BulkInviteMembersRequest,
+        context: RuntimeContext,
+    ): Promise<BulkInvitationResult>;
 
     redeemInvitation(
         input: RedeemInvitationRequest,

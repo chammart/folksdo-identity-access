@@ -69,6 +69,9 @@ export const ACCESS_ROUTE_PERMISSIONS = {
     createRole:
         ACCESS_ADMINISTRATIVE_PERMISSIONS.roleCreate,
 
+    cloneRole:
+        ACCESS_ADMINISTRATIVE_PERMISSIONS.roleClone,
+
     getRole:
         ACCESS_ADMINISTRATIVE_PERMISSIONS.roleView,
 

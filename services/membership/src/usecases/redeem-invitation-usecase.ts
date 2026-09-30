@@ -191,7 +191,7 @@ export function createRedeemInvitationUseCase(
             // enforceable.
             // -----------------------------------------------------------------
 
-            const membership =
+            const baseMembership =
                 existingMembership
                 ?? createMembership({
                     membershipId:
@@ -211,6 +211,14 @@ export function createRedeemInvitationUseCase(
                     active:
                         false,
                 });
+
+            const membership: MembershipState = currentInvitation.initialRoleId === undefined
+                ? baseMembership
+                : {
+                    ...baseMembership,
+                    sourceInvitationId: currentInvitation.invitationId,
+                    initialRoleId: currentInvitation.initialRoleId,
+                };
 
             // -----------------------------------------------------------------
             // APPLY INVITATION BUSINESS RULE
@@ -262,6 +270,12 @@ export function createRedeemInvitationUseCase(
 
                         membershipType:
                             membership.membershipType,
+
+                        sourceInvitationId:
+                            membership.sourceInvitationId,
+
+                        initialRoleId:
+                            membership.initialRoleId,
 
                         status:
                             membership.status,
@@ -332,6 +346,9 @@ export function createRedeemInvitationUseCase(
                 invitedEmail:
                     invitation.invitedEmail,
 
+                initialRoleId:
+                    invitation.initialRoleId,
+
                 redeemedByIdentityId:
                     invitation.redeemedByIdentityId,
 
@@ -401,6 +418,12 @@ export function createRedeemInvitationUseCase(
 
                 membershipType:
                     membership.membershipType,
+
+                sourceInvitationId:
+                    membership.sourceInvitationId,
+
+                initialRoleId:
+                    membership.initialRoleId,
 
                 status:
                     membership.status,

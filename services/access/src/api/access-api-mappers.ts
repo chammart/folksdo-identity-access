@@ -464,6 +464,12 @@ export function toPermissionAssignmentDto(
         assignedBy:
             assignment.assignedBy,
 
+        justification:
+            assignment.justification,
+
+        reviewAt:
+            assignment.reviewAt,
+
         assignedAt:
             assignment.effectiveFrom,
 

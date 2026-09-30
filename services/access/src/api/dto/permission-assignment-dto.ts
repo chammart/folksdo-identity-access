@@ -67,6 +67,10 @@ export interface PermissionAssignmentDto {
 
     readonly assignedBy: string;
 
+    readonly justification?: string;
+
+    readonly reviewAt?: string;
+
     readonly assignedAt: string;
 
     readonly updatedAt: string;

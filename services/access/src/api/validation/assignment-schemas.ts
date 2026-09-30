@@ -155,6 +155,8 @@ export const assignRoleRequestSchema =
                         "membershipId",
                         "tenantId",
                         "expiresAt",
+                        "justification",
+                        "reviewAt",
                     ],
                     path,
                 ),
@@ -221,6 +223,22 @@ export const assignRoleRequestSchema =
                         ),
                     );
 
+            const justificationResult =
+                input.justification === undefined
+                    ? accessValidationSuccess<string | undefined>(undefined)
+                    : accessReasonSchema.parse(
+                        input.justification,
+                        accessValidationPath(path, "justification"),
+                    );
+
+            const reviewAtResult =
+                input.reviewAt === undefined
+                    ? accessValidationSuccess<string | undefined>(undefined)
+                    : accessIsoDateTimeSchema.parse(
+                        input.reviewAt,
+                        accessValidationPath(path, "reviewAt"),
+                    );
+
             if (
                 !roleIdResult.success
             ) {
@@ -275,6 +293,14 @@ export const assignRoleRequestSchema =
                 issues.push(
                     ...expiresAtResult.issues,
                 );
+            }
+
+            if (!justificationResult.success) {
+                issues.push(...justificationResult.issues);
+            }
+
+            if (!reviewAtResult.success) {
+                issues.push(...reviewAtResult.issues);
             }
 
             if (
@@ -362,6 +388,12 @@ export const assignRoleRequestSchema =
 
                 expiresAt:
                     expiresAtResult.value,
+
+                justification:
+                    justificationResult.success ? justificationResult.value : undefined,
+
+                reviewAt:
+                    reviewAtResult.success ? reviewAtResult.value : undefined,
             });
         },
     );
@@ -421,6 +453,8 @@ export const grantPermissionRequestSchema =
                         "scope",
                         "resource",
                         "expiresAt",
+                        "justification",
+                        "reviewAt",
                     ],
                     path,
                 ),
@@ -520,6 +554,22 @@ export const grantPermissionRequestSchema =
                         ),
                     );
 
+            const justificationResult =
+                input.justification === undefined
+                    ? accessValidationSuccess<string | undefined>(undefined)
+                    : accessReasonSchema.parse(
+                        input.justification,
+                        accessValidationPath(path, "justification"),
+                    );
+
+            const reviewAtResult =
+                input.reviewAt === undefined
+                    ? accessValidationSuccess<string | undefined>(undefined)
+                    : accessIsoDateTimeSchema.parse(
+                        input.reviewAt,
+                        accessValidationPath(path, "reviewAt"),
+                    );
+
             if (
                 !permissionIdResult.success
             ) {
@@ -598,6 +648,14 @@ export const grantPermissionRequestSchema =
                 issues.push(
                     ...expiresAtResult.issues,
                 );
+            }
+
+            if (!justificationResult.success) {
+                issues.push(...justificationResult.issues);
+            }
+
+            if (!reviewAtResult.success) {
+                issues.push(...reviewAtResult.issues);
             }
 
             if (
@@ -718,6 +776,12 @@ export const grantPermissionRequestSchema =
 
                 expiresAt:
                     expiresAtResult.value,
+
+                justification:
+                    justificationResult.success ? justificationResult.value : undefined,
+
+                reviewAt:
+                    reviewAtResult.success ? reviewAtResult.value : undefined,
             });
         },
     );

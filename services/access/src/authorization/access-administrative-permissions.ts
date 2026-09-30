@@ -125,6 +125,12 @@ export const ACCESS_ADMINISTRATIVE_PERMISSIONS = {
             "view",
         ),
 
+    roleClone:
+        defineAccessAdministrativePermission(
+            "role",
+            "clone",
+        ),
+
     roleList:
         defineAccessAdministrativePermission(
             "role",

@@ -290,6 +290,9 @@ function createMembershipOutboxSubjects(): MembershipOutboxSubjects {
         invitationCreated:
             "membership.invitation.created",
 
+        invitationReissued:
+            "membership.invitation.reissued",
+
         invitationRedeemed:
             "membership.invitation.redeemed",
 

@@ -22,6 +22,7 @@ export * from "./list-tenant-memberships-usecase";
 export * from "./membership-usecase-contracts";
 export * from "./reactivate-membership-usecase";
 export * from "./redeem-invitation-usecase";
+export * from "./reissue-invitation-usecase";
 export * from "./revoke-invitation-usecase";
 export * from "./suspend-membership-usecase";
 export * from "./switch-membership-context-usecase";

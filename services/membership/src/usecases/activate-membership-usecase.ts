@@ -88,6 +88,8 @@ export function createActivateMembershipUseCase(
                 identityId: membership.identityId,
                 tenantId: membership.tenantId,
                 membershipType: membership.membershipType,
+                sourceInvitationId: membership.sourceInvitationId,
+                initialRoleId: membership.initialRoleId,
                 status: membership.status,
                 activatedAt: membership.activatedAt,
                 occurredAt: now,

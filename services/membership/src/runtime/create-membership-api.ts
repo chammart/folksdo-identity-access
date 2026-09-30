@@ -65,6 +65,7 @@ import type {
     ListTenantMembershipsUseCase,
     ReactivateMembershipUseCase,
     RedeemInvitationUseCase,
+    ReissueInvitationUseCase,
     RevokeInvitationUseCase,
     SuspendMembershipUseCase,
     SwitchMembershipContextUseCase,
@@ -101,6 +102,9 @@ export interface CreateMembershipApiInput {
 
     readonly redeemInvitationUseCase:
     RedeemInvitationUseCase;
+
+    readonly reissueInvitationUseCase:
+    ReissueInvitationUseCase;
 
     readonly revokeInvitationUseCase:
     RevokeInvitationUseCase;
@@ -355,6 +359,86 @@ export function createMembershipApi(
                 request,
                 context,
             );
+        },
+
+        async reissueInvitation(
+            invitationId,
+            request,
+            context,
+        ) {
+            const authorization = await authorizeAdministrativeOperation(
+                input,
+                {
+                    permission: membershipPermissions.reissueInvitation,
+                    resource: { type: "invitation", id: invitationId },
+                },
+                context,
+            );
+            const invitation = await input.invariantGuard.resolveInvitation(invitationId);
+            assertInvitationTenantConsistency(invitation.targetTenantId, authorization.tenantId);
+            return input.reissueInvitationUseCase.execute(invitationId, request, context);
+        },
+
+        async bulkInviteMembers(
+            request,
+            context,
+        ) {
+            await authorizeAdministrativeOperation(
+                input,
+                {
+                    permission: membershipPermissions.bulkInvite,
+                    tenantId: request.tenantId,
+                    resource: { type: "invitation" },
+                },
+                context,
+            );
+
+            const items = [];
+            for (const [index, item] of request.items.entries()) {
+                try {
+                    const invitation = await input.inviteMemberUseCase.execute(
+                        { tenantId: request.tenantId, ...item },
+                        context,
+                    );
+                    const publicInvitation = {
+                        invitationId: invitation.invitationId,
+                        targetTenantId: invitation.targetTenantId,
+                        invitedEmail: invitation.invitedEmail,
+                        membershipType: invitation.membershipType,
+                        initialRoleId: invitation.initialRoleId,
+                        status: invitation.status,
+                        createdAt: invitation.createdAt,
+                        updatedAt: invitation.updatedAt,
+                        expiresAt: invitation.expiresAt,
+                        redeemedAt: invitation.redeemedAt,
+                        revokedAt: invitation.revokedAt,
+                        expiredAt: invitation.expiredAt,
+                        ...(invitation.invitationToken === undefined
+                            ? {}
+                            : { invitationToken: invitation.invitationToken }),
+                    };
+
+                    items.push({
+                        index,
+                        invitedEmail: item.invitedEmail,
+                        outcome: invitation.invitationToken === undefined ? "existing" as const : "created" as const,
+                        invitation: publicInvitation,
+                    });
+                } catch (error) {
+                    items.push({
+                        index,
+                        invitedEmail: item.invitedEmail,
+                        outcome: "failed" as const,
+                        error: {
+                            code: typeof error === "object" && error !== null && "code" in error && typeof error.code === "string"
+                                ? error.code
+                                : "membership_operation_failed",
+                            message: error instanceof Error ? error.message : "Membership invitation failed.",
+                        },
+                    });
+                }
+            }
+            return { tenantId: request.tenantId, items };
         },
 
         async redeemInvitation(

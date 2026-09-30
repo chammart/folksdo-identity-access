@@ -98,6 +98,14 @@ export interface MembershipState {
     readonly sourceInvitationId?: string;
 
     /**
+     * Access-owned Role reference requested by the originating invitation.
+     *
+     * Membership preserves the coordination intent only. Access owns the
+     * resulting assignment.
+     */
+    readonly initialRoleId?: string;
+
+    /**
      * Timestamp when the Membership became active.
      */
     readonly activatedAt?: string;

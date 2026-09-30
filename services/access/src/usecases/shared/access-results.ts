@@ -157,6 +157,10 @@ export interface PermissionAssignmentResult {
 
     readonly assignedBy: string;
 
+    readonly justification?: string;
+
+    readonly reviewAt?: string;
+
     readonly effectiveFrom: string;
 
     readonly expiresAt?: string;
@@ -503,6 +507,12 @@ export function toPermissionAssignmentResult(
 
         assignedBy:
             assignment.assignedBy,
+
+        justification:
+            assignment.justification,
+
+        reviewAt:
+            assignment.reviewAt,
 
         effectiveFrom:
             assignment.effectiveFrom,

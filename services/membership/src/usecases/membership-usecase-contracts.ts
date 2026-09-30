@@ -67,6 +67,8 @@ export interface MembershipOutboxSubjects {
 
     readonly invitationCreated: string;
 
+    readonly invitationReissued: string;
+
     readonly invitationRedeemed: string;
 
     readonly invitationRevoked: string;

@@ -43,6 +43,7 @@ import {
     assignRoleRequestSchema,
     createPermissionRequestSchema,
     createRoleRequestSchema,
+    cloneRoleRequestSchema,
     listPermissionAssignmentsQuerySchema,
     listPermissionsQuerySchema,
     listRoleAssignmentsQuerySchema,
@@ -1735,6 +1736,48 @@ function createAccessApiOperations(
             });
         },
 
+        cloneRole: async (roleId: string, request: Record<string, unknown>, context: AccessApiRequestContext) => {
+            await authorizeAdministrativeOperation(
+                "cloneRole",
+                context,
+                "role",
+                roleId,
+            );
+
+            const execution = requireTenantAdministrativeContext(context);
+            const source = await input.readStore.findRoleById(roleId);
+
+            if (
+                source === null
+                || source.roleType !== "tenant"
+                || source.tenantId !== execution.tenantId
+            ) {
+                throw new AccessAdministrativeAuthorizationDeniedError(
+                    "authorization_scope_invalid",
+                );
+            }
+
+            for (const permissionId of source.permissionIds) {
+                await assertDelegatedPermission(permissionId, context);
+            }
+
+            const role = await input.useCases.roles.create.execute({
+                key: request.key,
+                roleType: "tenant",
+                tenantId: execution.tenantId,
+                name: request.name,
+                description:
+                    typeof request.description === "string"
+                        ? request.description
+                        : source.description,
+                permissionIds: [...source.permissionIds],
+                createdBy: actorId(context),
+                metadata: eventMetadata(context),
+            } as Parameters<typeof input.useCases.roles.create.execute>[0]);
+
+            return toRoleDto({ role });
+        },
+
         updateRole: async (request: Record<string, unknown>, context: AccessApiRequestContext) => {
             const roleId =
                 String(
@@ -2132,6 +2175,14 @@ function createAccessApiOperations(
                     execution.tenantId,
                 assignedBy:
                     actorId(context),
+                justification:
+                    typeof request.justification === "string"
+                        ? request.justification
+                        : undefined,
+                reviewAt:
+                    typeof request.reviewAt === "string"
+                        ? request.reviewAt
+                        : undefined,
                 expiresAt:
                     request.expiresAt,
             } as Parameters<typeof input.useCases.roles.assign.execute>[0]);
@@ -2368,6 +2419,10 @@ function createAccessApiOperations(
                     actorId(context),
                 expiresAt:
                     request.expiresAt,
+                justification:
+                    request.justification,
+                reviewAt:
+                    request.reviewAt,
             } as Parameters<typeof input.useCases.permissions.grant.execute>[0]);
         },
 
@@ -3429,6 +3484,13 @@ function createAccessApiValidation():
             value =>
                 parse(
                     createRoleRequestSchema,
+                    value,
+                ),
+
+        cloneRole:
+            value =>
+                parse(
+                    cloneRoleRequestSchema,
                     value,
                 ),
 

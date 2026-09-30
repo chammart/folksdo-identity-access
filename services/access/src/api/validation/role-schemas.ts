@@ -14,6 +14,7 @@
 import type {
     ApiArchiveRoleRequest,
     ApiCreateRoleRequest,
+    ApiCloneRoleRequest,
     ListRolesQuery,
     ApiRestoreRoleRequest,
     RoleStatus,
@@ -315,6 +316,34 @@ export const createRoleRequestSchema =
 
                 permissionIds:
                     permissionIdsResult.value,
+            });
+        },
+    );
+
+export const cloneRoleRequestSchema =
+    createAccessRequestSchema<ApiCloneRoleRequest>(
+        (value: unknown, path: string): AccessValidationResult<ApiCloneRoleRequest> => {
+            const objectResult = parseAccessObject(value, path);
+            if (!objectResult.success) return objectResult;
+            const input = objectResult.value;
+            const issues: AccessValidationIssue[] = [
+                ...findUnknownAccessObjectFields(input, ["key", "name", "description"], path),
+            ];
+            const keyResult = accessKeySchema.parse(input.key, accessValidationPath(path, "key"));
+            const nameResult = accessNameSchema.parse(input.name, accessValidationPath(path, "name"));
+            const descriptionResult = input.description === undefined
+                ? accessValidationSuccess<string | undefined>(undefined)
+                : accessDescriptionSchema.parse(input.description, accessValidationPath(path, "description"));
+            if (!keyResult.success) issues.push(...keyResult.issues);
+            if (!nameResult.success) issues.push(...nameResult.issues);
+            if (!descriptionResult.success) issues.push(...descriptionResult.issues);
+            if (issues.length > 0 || !keyResult.success || !nameResult.success || !descriptionResult.success) {
+                return accessValidationFailure(issues);
+            }
+            return accessValidationSuccess({
+                key: keyResult.value,
+                name: nameResult.value,
+                description: descriptionResult.value,
             });
         },
     );

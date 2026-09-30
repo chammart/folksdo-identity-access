@@ -164,6 +164,16 @@ export interface PermissionAssignmentState {
     readonly assignedBy: string;
 
     /**
+     * Human-readable governance justification for direct access.
+     */
+    readonly justification?: string;
+
+    /**
+     * Governance review due timestamp.
+     */
+    readonly reviewAt?: string;
+
+    /**
      * Timestamp from which the assignment may participate in authorization.
      */
     readonly effectiveFrom: string;

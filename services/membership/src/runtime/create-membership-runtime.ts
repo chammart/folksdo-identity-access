@@ -62,6 +62,7 @@ import {
     createListTenantMembershipsUseCase,
     createReactivateMembershipUseCase,
     createRedeemInvitationUseCase,
+    createReissueInvitationUseCase,
     createRevokeInvitationUseCase,
     createSuspendMembershipUseCase,
     createSwitchMembershipContextUseCase,
@@ -215,6 +216,13 @@ export function createMembershipRuntime(
                 }),
 
             redeemInvitationUseCase,
+
+            reissueInvitationUseCase:
+                createReissueInvitationUseCase({
+                    ...mutationDependencies,
+                    defaultInvitationTtlMilliseconds:
+                        input.defaultInvitationTtlMilliseconds,
+                }),
 
             revokeInvitationUseCase:
                 createRevokeInvitationUseCase(

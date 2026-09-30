@@ -49,4 +49,14 @@ export interface ApiGrantPermissionRequest {
      * Optional ISO 8601 expiration time.
      */
     readonly expiresAt?: string;
+
+    /**
+     * Required governance justification for direct-access exceptions.
+     */
+    readonly justification?: string;
+
+    /**
+     * Optional ISO 8601 date by which the exception should be reviewed.
+     */
+    readonly reviewAt?: string;
 }

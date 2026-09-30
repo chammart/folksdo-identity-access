@@ -53,11 +53,34 @@ export interface InviteMemberRequest {
     readonly membershipType: MembershipType;
 
     /**
+     * Optional Access-owned tenant Role to apply when the invited Membership
+     * becomes active. Membership stores only the intent reference.
+     */
+    readonly initialRoleId?: string;
+
+    /**
      * Optional invitation lifetime override.
      *
      * When omitted, Membership Operations™ applies its configured default.
      */
     readonly expiresInMilliseconds?: number;
+}
+
+export interface ResendInvitationRequest {
+    readonly idempotencyKey: string;
+    readonly expiresInMilliseconds?: number;
+}
+
+export interface BulkInvitationItemRequest {
+    readonly invitedEmail: string;
+    readonly membershipType: MembershipType;
+    readonly initialRoleId?: string;
+    readonly expiresInMilliseconds?: number;
+}
+
+export interface BulkInviteMembersRequest {
+    readonly tenantId: string;
+    readonly items: readonly BulkInvitationItemRequest[];
 }
 
 export interface RedeemInvitationRequest {
@@ -119,6 +142,7 @@ export interface InvitationResult {
     readonly targetTenantId: string;
     readonly invitedEmail: string;
     readonly membershipType: MembershipType;
+    readonly initialRoleId?: string;
     readonly status: InvitationStatus;
 
     readonly createdAt: string;

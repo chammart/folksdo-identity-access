@@ -41,6 +41,7 @@ import {
     createPolicyRoute,
     createRestrictionRoute,
     createRoleRoute,
+    cloneRoleRoute,
     getPermissionRoute,
     getRoleRoute,
     getEffectiveAccessRoute,
@@ -147,6 +148,17 @@ export interface AccessApiValidation {
 
     readonly createRole:
     AccessApi["createRole"] extends (
+        request: infer TRequest,
+        context: AccessApiRequestContext,
+    ) => unknown
+    ? (
+        value: unknown,
+    ) => TRequest
+    : never;
+
+    readonly cloneRole:
+    AccessApi["cloneRole"] extends (
+        roleId: string,
         request: infer TRequest,
         context: AccessApiRequestContext,
     ) => unknown
@@ -495,6 +507,22 @@ export async function registerAccessRoutes(
                         command,
                         context,
                     );
+                },
+            ),
+    );
+
+    server.post<{
+        Params: AccessRoleParameters;
+    }>(
+        `${ACCESS_API_PREFIX}${cloneRoleRoute.path}`,
+        async (request, reply) =>
+            executeAccessRoute(
+                reply,
+                cloneRoleRoute.successStatusCode,
+                async () => {
+                    const context = await contextResolver.resolve(request);
+                    const command = validation.cloneRole(request.body);
+                    return api.cloneRole(request.params.roleId, command, context);
                 },
             ),
     );
