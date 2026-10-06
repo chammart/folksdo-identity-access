@@ -104,6 +104,10 @@ import {
     composeAccessWorkers,
 } from "./compose-access-workers";
 
+import {
+    createAccessProviderBootstrap,
+} from "../provider-bootstrap";
+
 import type {
     AccessRuntimeComponents,
 } from "../access-runtime-contracts";
@@ -475,6 +479,9 @@ export function composeAccessServiceComponents(
             composedReadStore,
 
         useCases,
+
+        providerBootstrap:
+            createAccessProviderBootstrap(useCases, readStore),
 
         workers,
     };

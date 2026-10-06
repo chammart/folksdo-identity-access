@@ -1,0 +1,50 @@
+# docker-compose.local.yml
+# -----------------------------------------------------------------------------
+# FOLKSDO IAM™ LOCAL DEVELOPMENT INFRASTRUCTURE
+# -----------------------------------------------------------------------------
+# Repository-owned infrastructure for local IAM development.
+#
+# Ports intentionally match the repository root .env.
+# -----------------------------------------------------------------------------
+
+services:
+  mongo:
+    image: mongo:7.0
+    container_name: folksdo-identity-access-local-mongo
+    command:
+      - mongod
+      - --port
+      - "27027"
+      - --replSet
+      - rs0
+      - --bind_ip_all
+    ports:
+      - "127.0.0.1:27027:27027"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mongosh --port 27027 --quiet --eval 'db.adminCommand({ ping: 1 }).ok' | grep 1",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+
+  nats:
+    image: nats:2.10-alpine
+    container_name: folksdo-identity-access-local-nats
+    command:
+      - "-js"
+      - "-sd"
+      - "/data"
+      - "-m"
+      - "8222"
+    ports:
+      - "127.0.0.1:4227:4222"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8222/varz"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 5s

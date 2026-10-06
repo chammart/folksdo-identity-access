@@ -8,7 +8,7 @@
 
 import Fastify, { type FastifyInstance } from "fastify";
 import { bootstrapAccessService, type AccessRuntime } from "@folksdo-identity-access/access";
-import { bootstrapIdentityService, type IdentityApi } from "@folksdo-identity-access/identity";
+import { bootstrapIdentityService, type IdentityApi, type IdentityRuntime } from "@folksdo-identity-access/identity";
 import { bootstrapMembershipService, type MembershipApi, type MembershipRuntime } from "@folksdo-identity-access/membership";
 import { createPlatformRuntime, type PlatformRuntime } from "@folksdo-platform/runtime";
 import { createAuthenticatedAccessContextResolver } from "../authentication/create-authenticated-access-context-resolver";
@@ -34,6 +34,7 @@ import { registerIamAuditExportRoutes } from "./register-iam-audit-export-routes
 export interface ServerRuntime {
     readonly app: FastifyInstance;
     readonly platformRuntime: PlatformRuntime;
+    readonly identityRuntime: IdentityRuntime;
     readonly membershipRuntime: MembershipRuntime;
     readonly accessRuntime: AccessRuntime;
     start(): Promise<void>;
@@ -59,6 +60,7 @@ export async function bootstrapServer(config: ServerConfig): Promise<ServerRunti
         return createServerRuntime({
             app,
             platformRuntime,
+            identityRuntime: services.identityRuntime,
             membershipRuntime: services.membershipRuntime,
             accessRuntime,
             port: config.port,
@@ -74,6 +76,7 @@ async function bootstrapServices(input: {
     readonly platformRuntime: PlatformRuntime;
     readonly config: ServerConfig;
 }): Promise<{
+    readonly identityRuntime: IdentityRuntime;
     readonly membershipRuntime: MembershipRuntime;
     readonly accessRuntime: AccessRuntime;
 }> {
@@ -265,6 +268,7 @@ async function bootstrapServices(input: {
         providerSecurityResolver: identityProviderReadSecurityResolver,
     });
     return {
+        identityRuntime,
         membershipRuntime,
         accessRuntime,
     };
@@ -296,6 +300,7 @@ function registerHealthRoutes(input: {
 function createServerRuntime(input: {
     readonly app: FastifyInstance;
     readonly platformRuntime: PlatformRuntime;
+    readonly identityRuntime: IdentityRuntime;
     readonly membershipRuntime: MembershipRuntime;
     readonly accessRuntime: AccessRuntime;
     readonly port: number;
@@ -304,6 +309,7 @@ function createServerRuntime(input: {
     return {
         app: input.app,
         platformRuntime: input.platformRuntime,
+        identityRuntime: input.identityRuntime,
         membershipRuntime: input.membershipRuntime,
         accessRuntime: input.accessRuntime,
         async start() {

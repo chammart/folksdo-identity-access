@@ -10,4 +10,4 @@ export * from "./create-membership-api";
 export * from "./create-membership-runtime";
 export * from "./membership-runtime";
 export * from "./membership-service-config";
-
+export * from "./provider-bootstrap";

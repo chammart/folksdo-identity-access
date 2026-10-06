@@ -83,6 +83,10 @@ import type {
     MembershipRuntime,
 } from "./membership-runtime";
 
+import {
+    createMembershipProviderBootstrap,
+} from "./provider-bootstrap";
+
 // -----------------------------------------------------------------------------
 // INPUT CONTRACT
 // -----------------------------------------------------------------------------
@@ -157,6 +161,13 @@ export function createMembershipRuntime(
             mutationDependencies,
         );
 
+    const inviteMemberUseCase =
+        createInviteMemberUseCase({
+            ...mutationDependencies,
+            defaultInvitationTtlMilliseconds:
+                input.defaultInvitationTtlMilliseconds,
+        });
+
     // -------------------------------------------------------------------------
     // MEMBERSHIP SECURITY BOUNDARIES
     // -------------------------------------------------------------------------
@@ -207,13 +218,7 @@ export function createMembershipRuntime(
                     mutationDependencies,
                 ),
 
-            inviteMemberUseCase:
-                createInviteMemberUseCase({
-                    ...mutationDependencies,
-
-                    defaultInvitationTtlMilliseconds:
-                        input.defaultInvitationTtlMilliseconds,
-                }),
+            inviteMemberUseCase,
 
             redeemInvitationUseCase,
 
@@ -312,6 +317,20 @@ export function createMembershipRuntime(
 
                 batchSize:
                     input.invitationExpirationBatchSize,
+            }),
+
+        providerBootstrap:
+            createMembershipProviderBootstrap({
+                inviteMemberUseCase,
+                revokeInvitationUseCase:
+                    createRevokeInvitationUseCase(
+                        mutationDependencies,
+                    ),
+                activateMembershipUseCase:
+                    createActivateMembershipUseCase(
+                        mutationDependencies,
+                    ),
+                readStore: input.readStore,
             }),
     };
 }

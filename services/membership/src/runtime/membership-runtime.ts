@@ -22,6 +22,7 @@ import type {
 
 import type { MembershipReactionDispatcher } from "../reactions";
 import type { InvitationExpirationWorker } from "../workers";
+import type { MembershipProviderBootstrap } from "./provider-bootstrap";
 
 // -----------------------------------------------------------------------------
 // PUBLIC RUNTIME CONTRACT
@@ -33,4 +34,7 @@ export interface MembershipRuntime {
 
     readonly reactions: MembershipReactionDispatcher;
     readonly invitationExpirationWorker: InvitationExpirationWorker;
+
+    /** Trusted environment-bootstrap port; never exposed as a public IAM API. */
+    readonly providerBootstrap: MembershipProviderBootstrap;
 }

@@ -7,7 +7,7 @@
     "typecheck": "tsc --noEmit",
     "build": "tsup",
     "dev": "tsx --env-file ../../.env src/main.ts",
-    "start": "node dist/main.js"
+    "start": "node --env-file ../../.env dist/main.js"
   },
   "dependencies": {
     "@folksdo-engine/foundation": "workspace:*",

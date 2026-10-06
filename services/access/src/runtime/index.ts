@@ -66,3 +66,5 @@ export * from "./access-runtime";
 
 export * from "./access-service-config";
 export * from "./bootstrap-access-service";
+
+export * from "./provider-bootstrap";

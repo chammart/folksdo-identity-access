@@ -48,6 +48,8 @@ import type {
     AccessRuntimeConfigInput,
 } from "./access-runtime-config";
 
+import type { AccessProviderBootstrap } from "./provider-bootstrap";
+
 // -----------------------------------------------------------------------------
 // COMPOSED CAPABILITIES
 // -----------------------------------------------------------------------------
@@ -73,6 +75,9 @@ export interface AccessRuntimeComponents {
 
     readonly workers?:
     ComposedAccessWorkers;
+
+    /** Trusted environment-bootstrap port; never a public Access API operation. */
+    readonly providerBootstrap: AccessProviderBootstrap;
 }
 
 // -----------------------------------------------------------------------------

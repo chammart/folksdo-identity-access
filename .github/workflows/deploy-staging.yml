@@ -239,10 +239,51 @@ jobs:
               fi
             done
 
+  bootstrap-provider:
+    name: Bootstrap Provider Operator
+    runs-on: ubuntu-latest
+    needs: [validate-build-publish, deploy]
+    environment:
+      name: staging
+      url: ${{ vars.IAM_STAGING_BASE_URL }}
+
+    steps:
+      - name: Reconcile staging Provider operator
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          VPS_DEPLOY_ROOT: ${{ secrets.VPS_DEPLOY_ROOT }}
+          DEPLOY_PATH_SUFFIX: ${{ env.DEPLOY_PATH_SUFFIX }}
+          COMPOSE_PROJECT: ${{ env.COMPOSE_PROJECT_NAME }}
+          IAM_PROVIDER_BOOTSTRAP_EMAIL: ${{ secrets.IAM_PROVIDER_BOOTSTRAP_EMAIL }}
+          IAM_PROVIDER_BOOTSTRAP_PASSWORD: ${{ secrets.IAM_PROVIDER_BOOTSTRAP_PASSWORD }}
+          IAM_PROVIDER_BOOTSTRAP_TENANT_ID: ${{ secrets.IAM_PROVIDER_BOOTSTRAP_TENANT_ID }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT }}
+          command_timeout: 20m
+          script_stop: true
+          envs: VPS_DEPLOY_ROOT,DEPLOY_PATH_SUFFIX,COMPOSE_PROJECT,IAM_PROVIDER_BOOTSTRAP_EMAIL,IAM_PROVIDER_BOOTSTRAP_PASSWORD,IAM_PROVIDER_BOOTSTRAP_TENANT_ID
+          script: |
+            set -euo pipefail
+            DEPLOY_PATH="${VPS_DEPLOY_ROOT}/${DEPLOY_PATH_SUFFIX}"
+            cd "${DEPLOY_PATH}"
+
+            test -n "${IAM_PROVIDER_BOOTSTRAP_EMAIL:-}"
+            test -n "${IAM_PROVIDER_BOOTSTRAP_PASSWORD:-}"
+            test -n "${IAM_PROVIDER_BOOTSTRAP_TENANT_ID:-}"
+
+            docker compose --project-name "${COMPOSE_PROJECT}" exec -T api env \
+              IAM_PROVIDER_BOOTSTRAP_EMAIL="${IAM_PROVIDER_BOOTSTRAP_EMAIL}" \
+              IAM_PROVIDER_BOOTSTRAP_PASSWORD="${IAM_PROVIDER_BOOTSTRAP_PASSWORD}" \
+              IAM_PROVIDER_BOOTSTRAP_TENANT_ID="${IAM_PROVIDER_BOOTSTRAP_TENANT_ID}" \
+              pnpm iam:bootstrap-provider
+
   prepare-staging:
     name: Prepare Staging Certification
     runs-on: ubuntu-latest
-    needs: [validate-build-publish, deploy]
+    needs: [validate-build-publish, deploy, bootstrap-provider]
     environment:
       name: staging
       url: ${{ vars.IAM_STAGING_BASE_URL }}

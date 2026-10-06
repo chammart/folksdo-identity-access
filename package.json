@@ -7,11 +7,9 @@
     "node": ">=22"
   },
   "scripts": {
-    "typecheck": "pnpm typecheck:certification && pnpm --filter @folksdo-identity-access/identity typecheck && pnpm --filter @folksdo-identity-access/membership typecheck && pnpm --filter @folksdo-identity-access/access typecheck && pnpm --filter @folksdo-identity-access/server typecheck",
+    "typecheck": "pnpm typecheck:certification && pnpm --filter @folksdo-identity-access/identity typecheck && pnpm --filter @folksdo-identity-access/membership typecheck && pnpm --filter @folksdo-identity-access/access typecheck && pnpm --filter @folksdo-identity-access/server typecheck && pnpm --filter @folksdo-identity-access/provider-admin typecheck",
     "typecheck:certification": "tsc -p scripts/tsconfig.json --noEmit && tsc -p tests/tsconfig.json --noEmit",
-    "build": "pnpm --filter @folksdo-identity-access/identity build && pnpm --filter @folksdo-identity-access/membership build && pnpm --filter @folksdo-identity-access/access build && pnpm --filter @folksdo-identity-access/server build",
-    "dev": "pnpm --filter @folksdo-identity-access/server dev",
-    "start": "pnpm --filter @folksdo-identity-access/server start",
+    "build": "pnpm --filter @folksdo-identity-access/identity build && pnpm --filter @folksdo-identity-access/membership build && pnpm --filter @folksdo-identity-access/access build && pnpm --filter @folksdo-identity-access/server build && pnpm --filter @folksdo-identity-access/provider-admin build",
     "test:integration": "tsx scripts/testing/run-integration-tests.ts",
     "test:e2e": "tsx scripts/testing/run-integration-tests.ts --e2e",
     "test:integration:jest": "jest --config jest.config.integration.cjs --runInBand --detectOpenHandles",
@@ -19,7 +17,15 @@
     "certification:local": "tsx scripts/certification/prepare-local-certification.ts",
     "certification:staging": "pnpm staging:certify",
     "staging:prepare": "tsx scripts/staging/prepare.ts",
-    "staging:certify": "tsx scripts/staging/certify.ts"
+    "staging:certify": "tsx scripts/staging/certify.ts",
+    "dev": "pnpm infra:local:up && pnpm --filter @folksdo-identity-access/server dev",
+    "start": "pnpm infra:local:up && pnpm --filter @folksdo-identity-access/server start",
+    "infra:local:up": "tsx scripts/development/prepare-local-infrastructure.ts",
+    "infra:local:down": "docker compose -f docker-compose.local.yml down",
+    "dev:prepare-provider": "pnpm infra:local:up && pnpm iam:bootstrap-provider",
+    "dev:provider-admin": "pnpm --filter @folksdo-identity-access/provider-admin dev",
+    "iam:bootstrap-provider": "pnpm iam:bootstrap-provider:prepare && tsx --env-file .env scripts/bootstrap/bootstrap-provider.ts",
+    "iam:bootstrap-provider:prepare": "pnpm --filter @folksdo-identity-access/membership build && pnpm --filter @folksdo-identity-access/access build"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",

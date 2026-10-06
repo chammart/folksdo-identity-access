@@ -1,0 +1,2 @@
+import { iamRequest } from "../../../../../../utils/iam"
+export default defineEventHandler(async (event) => { const userId=getRouterParam(event,"userId"), sessionId=getRouterParam(event,"sessionId"); if(!userId||!sessionId) throw createError({statusCode:400,statusMessage:"Identity and session are required."}); return await iamRequest(event, `/api/v1/identities/${encodeURIComponent(userId)}/sessions/${encodeURIComponent(sessionId)}/revoke`, {method:"POST",authenticated:true}) })

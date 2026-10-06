@@ -5,28 +5,28 @@ variables:
     value: "http://127.0.0.1:3110"
 
   - name: administratorIdentityId
-    value: "user_0c4438ce-e258-4e07-b9ca-e634aa46b80a"
+    value: "user_9624bfb8-d5f5-45e4-b2c7-c51a97596bd5"
 
   - name: administratorEmail
-    value: "identity-18119f8b2beb430f95be87a7531982e4@example.com"
+    value: "provider.admin@local.folksdo.test"
 
   - name: administratorSessionId
-    value: "session_6a5f87f0-2329-4cfc-a668-7556e9deb414"
+    value: "session_dcf8da8c-f67a-4ae3-a602-00ea5b636345"
 
   - name: administratorMembershipId
-    value: "membership_18119f8b2beb430f95be87a7531982e4"
+    value: "membership_b7e98ff92b1d448fa546be24e09d7fa8"
 
   - name: administratorTenantId
-    value: "tenant_18119f8b2beb430f95be87a7531982e4"
+    value: "tenant_b7e98ff92b1d448fa546be24e09d7fa8"
 
   - name: ordinaryMemberIdentityId
-    value: "user_0327f14d-172e-48ff-8ff4-b9c77f056a40"
+    value: "user_7f554969-bdad-4177-b89b-402f1f77fae3"
 
   - name: ordinaryMemberSessionId
-    value: "session_f8f933cc-0c46-4460-b6c0-b202287af6a2"
+    value: "session_6f383a49-e2c7-4361-9649-03027c5229b8"
 
   - name: ordinaryMemberMembershipId
-    value: "membership_7defee51e12940ddaf22f863c63e4a3c"
+    value: "membership_81aae0b82e904072a453927b63bf9420"
 
   - name: ordinaryMemberTenantId
-    value: "tenant_7defee51e12940ddaf22f863c63e4a3c"
+    value: "tenant_81aae0b82e904072a453927b63bf9420"
