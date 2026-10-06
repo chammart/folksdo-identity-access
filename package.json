@@ -22,9 +22,9 @@
     "start": "pnpm infra:local:up && pnpm --filter @folksdo-identity-access/server start",
     "infra:local:up": "tsx scripts/development/prepare-local-infrastructure.ts",
     "infra:local:down": "docker compose -f docker-compose.local.yml down",
-    "dev:prepare-provider": "pnpm infra:local:up && pnpm iam:bootstrap-provider",
+    "dev:prepare-provider": "pnpm infra:local:up && tsx --env-file .env scripts/bootstrap/bootstrap-provider.ts",
     "dev:provider-admin": "pnpm --filter @folksdo-identity-access/provider-admin dev",
-    "iam:bootstrap-provider": "pnpm iam:bootstrap-provider:prepare && tsx --env-file .env scripts/bootstrap/bootstrap-provider.ts",
+    "iam:bootstrap-provider": "pnpm iam:bootstrap-provider:prepare && tsx scripts/bootstrap/bootstrap-provider.ts",
     "iam:bootstrap-provider:prepare": "pnpm --filter @folksdo-identity-access/membership build && pnpm --filter @folksdo-identity-access/access build"
   },
   "devDependencies": {
