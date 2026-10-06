@@ -402,10 +402,14 @@ export class InvalidIdentityAccessTransitionError extends AccessError {
 // -----------------------------------------------------------------------------
 
 export class AccessCommitFailedError extends AccessError {
-    public constructor(_cause?: unknown) {
+    public readonly cause: unknown;
+
+    public constructor(cause?: unknown) {
         super(
             "access_commit_failed",
             "Access state could not be committed.",
         );
+
+        this.cause = cause;
     }
 }

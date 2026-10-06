@@ -73,7 +73,9 @@ export async function commitAccess(
             outbox:
                 input.outbox,
         });
-    } catch {
-        throw new AccessCommitFailedError();
+    } catch (error) {
+        throw new AccessCommitFailedError(
+            error,
+        );
     }
 }

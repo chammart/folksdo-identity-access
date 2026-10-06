@@ -106,39 +106,42 @@ async function invitationSignUpWithProjectionWait(
         : new Error("Provider invitation did not reach Identity before the bootstrap timeout.");
 }
 
-async function ensureProviderGrantWithProjectionWait(
-    runtime: Awaited<ReturnType<typeof bootstrapServer>>,
-    input: {
-        readonly membershipId: string;
-        readonly tenantId: string;
-        readonly permissionId: string;
-        readonly actorId: string;
-    },
-): Promise<void> {
-    const deadline = Date.now() + 15_000;
-    let lastError: unknown;
-
-    while (Date.now() < deadline) {
-        try {
-            await runtime.accessRuntime.components.providerBootstrap.ensureGrant(input);
-            return;
-        } catch (error) {
-            lastError = error;
-            const code = typeof error === "object" && error !== null && "code" in error
-                ? (error as { readonly code?: unknown }).code
-                : undefined;
-
-            if (code !== "membership_access_context_not_found") {
-                throw error;
-            }
-
-            await new Promise(resolve => setTimeout(resolve, 150));
-        }
+function bootstrapFailureDetail(error: unknown): string {
+    if (typeof error !== "object" || error === null) {
+        return error instanceof Error ? error.message : "unknown failure";
     }
 
-    throw lastError instanceof Error
-        ? lastError
-        : new Error("Provider Membership did not reach Access before the bootstrap timeout.");
+    const candidate = error as {
+        readonly name?: unknown;
+        readonly code?: unknown;
+        readonly message?: unknown;
+        readonly cause?: unknown;
+    };
+    const cause = typeof candidate.cause === "object" && candidate.cause !== null
+        ? candidate.cause as {
+            readonly name?: unknown;
+            readonly code?: unknown;
+            readonly message?: unknown;
+        }
+        : undefined;
+
+    const parts = [
+        typeof candidate.name === "string" ? `error=${candidate.name}` : undefined,
+        typeof candidate.code === "string" || typeof candidate.code === "number"
+            ? `code=${String(candidate.code)}`
+            : undefined,
+        typeof cause?.name === "string" ? `cause=${cause.name}` : undefined,
+        typeof cause?.code === "string" || typeof cause?.code === "number"
+            ? `causeCode=${String(cause.code)}`
+            : undefined,
+        typeof cause?.message === "string" ? `causeMessage=${cause.message}` : undefined,
+    ].filter((value): value is string => value !== undefined);
+
+    return parts.join(", ") || (
+        typeof candidate.message === "string"
+            ? candidate.message
+            : "unknown failure"
+    );
 }
 
 async function main(): Promise<void> {
@@ -195,17 +198,33 @@ async function main(): Promise<void> {
             context(tenantId),
         );
         for (const [service, resource, action] of PROVIDER_PERMISSIONS) {
-            const permissionId = await runtime.accessRuntime.components.providerBootstrap.ensurePermission({
-                service, resource, action,
-                displayName: `${service}.${resource}.${action}`,
-                description: `Allows ${service}.${resource}.${action}.`,
-            }, "system:provider-bootstrap");
-            await ensureProviderGrantWithProjectionWait(runtime, {
-                membershipId: membership.membershipId,
-                tenantId,
-                permissionId,
-                actorId: "system:provider-bootstrap",
-            });
+            const permissionName = `${service}.${resource}.${action}`;
+            let permissionId: string;
+
+            try {
+                permissionId = await runtime.accessRuntime.components.providerBootstrap.ensurePermission({
+                    service, resource, action,
+                    displayName: permissionName,
+                    description: `Allows ${permissionName}.`,
+                }, "system:provider-bootstrap");
+            } catch (error) {
+                throw new Error(
+                    `Provider bootstrap failed while ensuring Permission ${permissionName}: ${bootstrapFailureDetail(error)}`,
+                );
+            }
+
+            try {
+                await runtime.accessRuntime.components.providerBootstrap.ensureGrant({
+                    membershipId: membership.membershipId,
+                    tenantId,
+                    permissionId,
+                    actorId: "system:provider-bootstrap",
+                });
+            } catch (error) {
+                throw new Error(
+                    `Provider bootstrap failed while ensuring grant ${permissionName}: ${bootstrapFailureDetail(error)}`,
+                );
+            }
         }
 
         console.info("Provider operator bootstrap completed.");
