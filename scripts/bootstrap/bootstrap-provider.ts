@@ -106,6 +106,41 @@ async function invitationSignUpWithProjectionWait(
         : new Error("Provider invitation did not reach Identity before the bootstrap timeout.");
 }
 
+async function ensureProviderGrantWithProjectionWait(
+    runtime: Awaited<ReturnType<typeof bootstrapServer>>,
+    input: {
+        readonly membershipId: string;
+        readonly tenantId: string;
+        readonly permissionId: string;
+        readonly actorId: string;
+    },
+): Promise<void> {
+    const deadline = Date.now() + 15_000;
+    let lastError: unknown;
+
+    while (Date.now() < deadline) {
+        try {
+            await runtime.accessRuntime.components.providerBootstrap.ensureGrant(input);
+            return;
+        } catch (error) {
+            lastError = error;
+            const code = typeof error === "object" && error !== null && "code" in error
+                ? (error as { readonly code?: unknown }).code
+                : undefined;
+
+            if (code !== "membership_access_context_not_found") {
+                throw error;
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 150));
+        }
+    }
+
+    throw lastError instanceof Error
+        ? lastError
+        : new Error("Provider Membership did not reach Access before the bootstrap timeout.");
+}
+
 async function main(): Promise<void> {
     const environment = (process.env.NODE_ENV ?? "development").toLowerCase();
     const local = new Set(["development", "dev", "local", "test"]).has(environment);
@@ -165,7 +200,7 @@ async function main(): Promise<void> {
                 displayName: `${service}.${resource}.${action}`,
                 description: `Allows ${service}.${resource}.${action}.`,
             }, "system:provider-bootstrap");
-            await runtime.accessRuntime.components.providerBootstrap.ensureGrant({
+            await ensureProviderGrantWithProjectionWait(runtime, {
                 membershipId: membership.membershipId,
                 tenantId,
                 permissionId,
