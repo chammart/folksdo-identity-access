@@ -91,6 +91,32 @@ services:
       retries: 30
       start_period: 10s
 
+  provider-admin:
+    image: ghcr.io/chammart/folksdo-identity-access-provider-admin:${FOLKSDO_PROVIDER_ADMIN_IMAGE_TAG:?FOLKSDO_PROVIDER_ADMIN_IMAGE_TAG is required}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "3200"
+      FOLKSDO_IAM_BASE_URL: http://api:3100
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${FOLKSDO_PROVIDER_ADMIN_STAGING_PORT:-3201}:3200"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3200/login').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
 volumes:
   iam-mongo-data:
   iam-nats-data:

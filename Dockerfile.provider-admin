@@ -1,0 +1,25 @@
+# Dockerfile.provider-admin
+# -----------------------------------------------------------------------------
+# SAIWALY IAM™ PROVIDER ADMIN PRODUCTION IMAGE
+# -----------------------------------------------------------------------------
+# Server-rendered Nuxt application. IAM remains the business authority.
+# FOLKSDO_IAM_BASE_URL is supplied at runtime and is never baked into the image.
+# -----------------------------------------------------------------------------
+
+FROM node:22-bookworm-slim AS build
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+RUN corepack enable && corepack prepare pnpm@11.5.2 --activate
+WORKDIR /workspace/folksdo-services/folksdo-identity-access
+COPY folksdo-services/folksdo-identity-access ./
+RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @folksdo-identity-access/provider-admin build
+
+FROM node:22-bookworm-slim AS runtime
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=3200
+WORKDIR /app
+COPY --from=build /workspace/folksdo-services/folksdo-identity-access/apps/provider-admin/.output ./
+EXPOSE 3200
+CMD ["node", "server/index.mjs"]
