@@ -38,17 +38,36 @@ export function createAccessProviderBootstrap(
 ): AccessProviderBootstrap {
     return {
         async ensurePermission(permission, actorId) {
-            const permissionId = [permission.service, permission.resource, permission.action].join(".");
+            const existing = await readStore.findPermissionByKey(
+                permission.service,
+                permission.resource,
+                permission.action,
+            );
+            if (existing !== null) {
+                return existing.permissionId;
+            }
+
             try {
-                await useCases.permissions.create.execute({
+                const created = await useCases.permissions.create.execute({
                     ...permission,
                     classification: "administrative",
                     createdBy: actorId,
                 });
+                return created.permissionId;
             } catch (error) {
                 if (!(error instanceof PermissionAlreadyExistsError)) throw error;
+
+                // Another bootstrap/process may have committed the canonical
+                // Permission after the preflight read. Reconcile through the
+                // same business key protected by Mongo's unique index.
+                const reconciled = await readStore.findPermissionByKey(
+                    permission.service,
+                    permission.resource,
+                    permission.action,
+                );
+                if (reconciled === null) throw error;
+                return reconciled.permissionId;
             }
-            return permissionId;
         },
 
         async ensureGrant(input) {
