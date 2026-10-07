@@ -107,41 +107,48 @@ async function invitationSignUpWithProjectionWait(
 }
 
 function bootstrapFailureDetail(error: unknown): string {
-    if (typeof error !== "object" || error === null) {
-        return error instanceof Error ? error.message : "unknown failure";
-    }
+    const parts: string[] = [];
+    const seen = new Set<object>();
+    let current: unknown = error;
+    let depth = 0;
 
-    const candidate = error as {
-        readonly name?: unknown;
-        readonly code?: unknown;
-        readonly message?: unknown;
-        readonly cause?: unknown;
-    };
-    const cause = typeof candidate.cause === "object" && candidate.cause !== null
-        ? candidate.cause as {
+    while (typeof current === "object" && current !== null && depth < 4) {
+        if (seen.has(current)) {
+            break;
+        }
+        seen.add(current);
+
+        const candidate = current as {
             readonly name?: unknown;
             readonly code?: unknown;
             readonly message?: unknown;
+            readonly cause?: unknown;
+        };
+        const prefix = depth === 0
+            ? "error"
+            : `cause${depth}`;
+
+        if (typeof candidate.name === "string") {
+            parts.push(`${prefix}=${candidate.name}`);
         }
-        : undefined;
+        if (typeof candidate.code === "string" || typeof candidate.code === "number") {
+            parts.push(`${prefix}Code=${String(candidate.code)}`);
+        }
+        if (depth > 0 && typeof candidate.message === "string") {
+            parts.push(`${prefix}Message=${candidate.message}`);
+        }
 
-    const parts = [
-        typeof candidate.name === "string" ? `error=${candidate.name}` : undefined,
-        typeof candidate.code === "string" || typeof candidate.code === "number"
-            ? `code=${String(candidate.code)}`
-            : undefined,
-        typeof cause?.name === "string" ? `cause=${cause.name}` : undefined,
-        typeof cause?.code === "string" || typeof cause?.code === "number"
-            ? `causeCode=${String(cause.code)}`
-            : undefined,
-        typeof cause?.message === "string" ? `causeMessage=${cause.message}` : undefined,
-    ].filter((value): value is string => value !== undefined);
+        current = candidate.cause;
+        depth += 1;
+    }
 
-    return parts.join(", ") || (
-        typeof candidate.message === "string"
-            ? candidate.message
-            : "unknown failure"
-    );
+    if (parts.length > 0) {
+        return parts.join(", ");
+    }
+
+    return error instanceof Error
+        ? error.message
+        : "unknown failure";
 }
 
 async function main(): Promise<void> {
