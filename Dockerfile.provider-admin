@@ -11,6 +11,7 @@ ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable && corepack prepare pnpm@11.5.2 --activate
 WORKDIR /workspace/folksdo-services/folksdo-identity-access
+ENV CI=true
 COPY folksdo-services/folksdo-identity-access ./
 RUN pnpm install --frozen-lockfile
 RUN pnpm --filter @folksdo-identity-access/provider-admin build
